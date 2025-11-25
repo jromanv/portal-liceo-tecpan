@@ -83,19 +83,6 @@ export default function LoginPage() {
 
         {/* Contenido */}
         <div className="relative z-10 text-center lg:text-left max-w-md">
-          {/* Logo */}
-          <div className="mb-8 flex justify-center lg:justify-start">
-            <div className="bg-white rounded-2xl p-6 shadow-2xl">
-              <Image
-                src="/liceo-logo-color.png"
-                alt="Liceo Tecpán"
-                width={100}
-                height={100}
-                className="w-20 h-20 lg:w-24 lg:h-24"
-              />
-            </div>
-          </div>
-
           {/* Título */}
           <h1 className="text-4xl lg:text-5xl font-extrabold text-white mb-6 leading-tight">
             Bienvenido al
@@ -107,7 +94,7 @@ export default function LoginPage() {
 
           {/* Descripción */}
           <p className="text-white/90 text-lg lg:text-xl leading-relaxed mb-8">
-            Accede a tu información académica, horarios, calificaciones y más desde un solo lugar.
+            Accede a tu información académica, horarios, calendario y más desde un solo lugar.
           </p>
 
           {/* Características */}
@@ -118,7 +105,7 @@ export default function LoginPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <span className="text-white/80">Acceso seguro con Google Workspace</span>
+              <span className="text-white/80">Acceso seguro con tu cuenta Institucional de Google</span>
             </div>
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
@@ -148,8 +135,21 @@ export default function LoginPage() {
       {/* Panel Derecho - Formulario */}
       <div className="lg:w-1/2 bg-white flex items-center justify-center p-8 lg:p-12">
         <div className="w-full max-w-md">
-          {/* Header del formulario */}
-          <div className="mb-8">
+          {/* Logo centrado */}
+          <div className="mb-8 flex justify-center">
+            <div className="bg-white rounded-2xl p-4 shadow-lg border border-gray-100">
+              <Image
+                src="/liceo-logo-color.png"
+                alt="Liceo Tecpán"
+                width={80}
+                height={80}
+                className="w-16 h-16 lg:w-20 lg:h-20 object-contain"
+              />
+            </div>
+          </div>
+
+          {/* Header del formulario - Centrado */}
+          <div className="mb-8 text-center">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
               {showTraditionalLogin ? 'Acceso de Emergencia' : '¡Bienvenido!'}
             </h2>
