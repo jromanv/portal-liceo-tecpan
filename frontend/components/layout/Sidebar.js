@@ -2,9 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 
-export default function Sidebar({ menuItems, isOpen, onClose }) {
+export default function Sidebar({ menuItems, isOpen, onClose, isCollapsed, onToggleCollapse }) {
   const pathname = usePathname();
+  const [hoveredItem, setHoveredItem] = useState(null);
 
   return (
     <>
@@ -18,16 +20,16 @@ export default function Sidebar({ menuItems, isOpen, onClose }) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-30 w-64 bg-primary shadow-2xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed lg:fixed inset-y-0 left-0 z-30 bg-primary shadow-2xl transform transition-all duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          } ${isCollapsed ? 'lg:w-20' : 'w-64'
+          } top-16`}
       >
         {/* Header del Sidebar en móvil */}
         <div className="lg:hidden flex items-center justify-between p-4 border-b border-primary-light">
           <span className="text-white font-semibold">Menú</span>
           <button
             onClick={onClose}
-            className="text-white p-2 rounded-md hover:bg-primary-light"
+            className="text-white p-2 rounded-md hover:bg-primary-light transition-colors"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -35,24 +37,64 @@ export default function Sidebar({ menuItems, isOpen, onClose }) {
           </button>
         </div>
 
-        <nav className="mt-6 px-3">
+        {/* Botón de Collapse (solo desktop) */}
+        <div className="hidden lg:flex justify-end p-3 border-b border-primary-light">
+          <button
+            onClick={onToggleCollapse}
+            className="text-white p-2 rounded-md hover:bg-primary-light transition-colors"
+            title={isCollapsed ? 'Expandir menú' : 'Contraer menú'}
+          >
+            <svg
+              className={`w-5 h-5 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
+              />
+            </svg>
+          </button>
+        </div>
+
+        {/* Navegación */}
+        <nav className="mt-4 px-3">
           <ul className="space-y-1">
             {menuItems.map((item, index) => {
               const isActive = pathname === item.href;
               return (
-                <li key={index}>
+                <li
+                  key={index}
+                  onMouseEnter={() => setHoveredItem(index)}
+                  onMouseLeave={() => setHoveredItem(null)}
+                  className="relative"
+                >
                   <Link
                     href={item.href}
                     onClick={onClose}
-                    className={`flex items-center px-4 py-3 rounded-lg transition-all duration-200 ${
-                      isActive
+                    className={`flex items-center px-4 py-3 rounded-lg transition-all duration-200 ${isActive
                         ? 'bg-white text-primary shadow-md'
                         : 'text-white hover:bg-primary-light'
-                    }`}
+                      } ${isCollapsed ? 'justify-center' : ''}`}
                   >
                     <IconComponent type={item.iconType} />
-                    <span className="font-medium ml-3">{item.label}</span>
+                    {!isCollapsed && (
+                      <span className="font-medium ml-3">{item.label}</span>
+                    )}
                   </Link>
+
+                  {/* Tooltip para cuando está colapsado */}
+                  {isCollapsed && hoveredItem === index && (
+                    <div className="hidden lg:block absolute left-full ml-2 top-1/2 -translate-y-1/2 z-50">
+                      <div className="bg-gray-900 text-white text-sm px-3 py-2 rounded-md shadow-lg whitespace-nowrap">
+                        {item.label}
+                        <div className="absolute right-full top-1/2 -translate-y-1/2 border-8 border-transparent border-r-gray-900"></div>
+                      </div>
+                    </div>
+                  )}
                 </li>
               );
             })}
@@ -60,7 +102,7 @@ export default function Sidebar({ menuItems, isOpen, onClose }) {
         </nav>
 
         {/* Footer del Sidebar */}
-        <div className="absolute bottom-0 w-64 p-4 border-t border-primary-light">
+        <div className={`absolute bottom-0 left-0 right-0 p-4 border-t border-primary-light ${isCollapsed ? 'hidden' : 'block'}`}>
           <p className="text-xs text-gray-200 text-center">
             © 2025 Liceo Tecpán
           </p>
@@ -118,6 +160,7 @@ function IconComponent({ type }) {
     settings: (
       <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
       </svg>
     ),
   };

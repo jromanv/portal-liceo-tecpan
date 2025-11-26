@@ -46,10 +46,7 @@ export default function UsuariosPage() {
   const menuItems = [
     { href: '/dashboard/director', iconType: 'home', label: 'Inicio' },
     { href: '/dashboard/director/usuarios', iconType: 'users', label: 'Usuarios' },
-    { href: '/dashboard/director/docentes', iconType: 'user', label: 'Docentes' },
-    { href: '/dashboard/director/estudiantes', iconType: 'user', label: 'Estudiantes' },
-    { href: '/dashboard/director/reportes', iconType: 'chart', label: 'Reportes' },
-    { href: '/dashboard/director/configuracion', iconType: 'settings', label: 'Configuración' },
+    { href: '/dashboard/director/calendario', iconType: 'calendar', label: 'Calendario' },
   ];
 
   // Cargar usuarios

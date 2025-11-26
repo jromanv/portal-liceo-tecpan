@@ -9,6 +9,7 @@ export default function EstudianteDashboard() {
 
   const menuItems = [
     { href: '/dashboard/estudiante', iconType: 'home', label: 'Inicio' },
+    { href: '/dashboard/estudiante/calendario', iconType: 'calendar', label: 'Calendario' },
     { href: '/dashboard/estudiante/horario', iconType: 'calendar', label: 'Horario' },
     { href: '/dashboard/estudiante/calificaciones', iconType: 'chart', label: 'Calificaciones' },
     { href: '/dashboard/estudiante/tareas', iconType: 'document', label: 'Tareas' },
@@ -17,7 +18,7 @@ export default function EstudianteDashboard() {
 
   return (
     <ProtectedRoute allowedRoles={['estudiante']}>
-      <DashboardLayout 
+      <DashboardLayout
         userName={`${user?.nombre} ${user?.apellido}`}
         userRole={user?.rol}
         menuItems={menuItems}
@@ -28,32 +29,32 @@ export default function EstudianteDashboard() {
             ¡Bienvenido, {user?.nombre}!
           </h1>
           <p className="text-sm sm:text-base text-gray-600 mt-2">
-            Plan: {user?.plan === 'diario' ? 'Diario' : 'Fin de Semana'} | 
+            Plan: {user?.plan === 'diario' ? 'Diario' : 'Fin de Semana'} |
             Código: {user?.codigo_personal}
           </p>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
-          <StatCard 
-            title="Cursos Activos" 
-            value="6" 
-            color="bg-blue-500" 
+          <StatCard
+            title="Cursos Activos"
+            value="6"
+            color="bg-blue-500"
           />
-          <StatCard 
-            title="Tareas Pendientes" 
-            value="3" 
-            color="bg-yellow-500" 
+          <StatCard
+            title="Tareas Pendientes"
+            value="3"
+            color="bg-yellow-500"
           />
-          <StatCard 
-            title="Promedio General" 
-            value="85" 
-            color="bg-green-500" 
+          <StatCard
+            title="Promedio General"
+            value="85"
+            color="bg-green-500"
           />
-          <StatCard 
-            title="Asistencias" 
-            value="95%" 
-            color="bg-purple-500" 
+          <StatCard
+            title="Asistencias"
+            value="95%"
+            color="bg-purple-500"
           />
         </div>
 
@@ -61,12 +62,12 @@ export default function EstudianteDashboard() {
         <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-4 sm:mb-6">
           <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Anuncios Recientes</h2>
           <div className="space-y-4">
-            <AnnouncementItem 
+            <AnnouncementItem
               title="Examen de Matemática"
               date="25 de Noviembre"
               description="Recuerden estudiar los capítulos 5 y 6"
             />
-            <AnnouncementItem 
+            <AnnouncementItem
               title="Entrega de Proyecto"
               date="28 de Noviembre"
               description="Fecha límite para el proyecto de Ciencias Sociales"
@@ -78,17 +79,17 @@ export default function EstudianteDashboard() {
         <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
           <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Próximas Clases</h2>
           <div className="space-y-3">
-            <ClassItem 
+            <ClassItem
               subject="Matemática"
               time="08:00 - 09:00"
               teacher="Prof. Juan Pérez"
             />
-            <ClassItem 
+            <ClassItem
               subject="Lenguaje"
               time="09:00 - 10:00"
               teacher="Prof. Ana Martínez"
             />
-            <ClassItem 
+            <ClassItem
               subject="Ciencias"
               time="10:00 - 11:00"
               teacher="Prof. Carlos López"

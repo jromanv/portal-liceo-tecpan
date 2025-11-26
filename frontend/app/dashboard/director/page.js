@@ -10,15 +10,12 @@ export default function DirectorDashboard() {
   const menuItems = [
     { href: '/dashboard/director', iconType: 'home', label: 'Inicio' },
     { href: '/dashboard/director/usuarios', iconType: 'users', label: 'Usuarios' },
-    { href: '/dashboard/director/docentes', iconType: 'user', label: 'Docentes' },
-    { href: '/dashboard/director/estudiantes', iconType: 'user', label: 'Estudiantes' },
-    { href: '/dashboard/director/reportes', iconType: 'chart', label: 'Reportes' },
-    { href: '/dashboard/director/configuracion', iconType: 'settings', label: 'Configuración' },
+    { href: '/dashboard/director/calendario', iconType: 'calendar', label: 'Calendario' },
   ];
 
   return (
     <ProtectedRoute allowedRoles={['director']}>
-      <DashboardLayout 
+      <DashboardLayout
         userName={`${user?.nombre} ${user?.apellido}`}
         userRole={user?.rol}
         menuItems={menuItems}
@@ -35,25 +32,25 @@ export default function DirectorDashboard() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
-          <StatCard 
-            title="Total Estudiantes" 
-            value="450" 
-            color="bg-blue-500" 
+          <StatCard
+            title="Total Estudiantes"
+            value="450"
+            color="bg-blue-500"
           />
-          <StatCard 
-            title="Total Docentes" 
-            value="35" 
-            color="bg-green-500" 
+          <StatCard
+            title="Total Docentes"
+            value="35"
+            color="bg-green-500"
           />
-          <StatCard 
-            title="Cursos Activos" 
-            value="28" 
-            color="bg-purple-500" 
+          <StatCard
+            title="Cursos Activos"
+            value="28"
+            color="bg-purple-500"
           />
-          <StatCard 
-            title="Asistencia General" 
-            value="94%" 
-            color="bg-yellow-500" 
+          <StatCard
+            title="Asistencia General"
+            value="94%"
+            color="bg-yellow-500"
           />
         </div>
 
@@ -82,19 +79,19 @@ export default function DirectorDashboard() {
         <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
           <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Actividad Reciente</h2>
           <div className="space-y-4">
-            <ActivityItem 
+            <ActivityItem
               action="Nuevo docente registrado"
               user="Ana Martínez"
               time="Hace 2 horas"
               type="success"
             />
-            <ActivityItem 
+            <ActivityItem
               action="Calificaciones actualizadas"
               user="Juan Pérez - Matemática 3ro"
               time="Hace 4 horas"
               type="info"
             />
-            <ActivityItem 
+            <ActivityItem
               action="Nuevo estudiante inscrito"
               user="Pedro González - Plan Diario"
               time="Hace 1 día"
