@@ -3,15 +3,36 @@
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
+import { useEffect, useState } from 'react';
+import { getStats } from '@/lib/api/users';
+
 
 export default function DirectorDashboard() {
   const { user } = useAuth();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const menuItems = [
     { href: '/dashboard/director', iconType: 'home', label: 'Inicio' },
     { href: '/dashboard/director/usuarios', iconType: 'users', label: 'Usuarios' },
     { href: '/dashboard/director/calendario', iconType: 'calendar', label: 'Calendario' },
   ];
+
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        setLoading(true);
+        const response = await getStats();
+        setStats(response.data);
+      } catch (error) {
+        console.error('Error al cargar estadísticas:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadStats();
+  }, []);
 
   return (
     <ProtectedRoute allowedRoles={['director']}>
@@ -34,22 +55,22 @@ export default function DirectorDashboard() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
           <StatCard
             title="Total Estudiantes"
-            value="450"
+            value={loading ? '...' : stats?.total_estudiantes || 0}
             color="bg-blue-500"
           />
           <StatCard
             title="Total Docentes"
-            value="35"
+            value={loading ? '...' : stats?.total_docentes || 0}
             color="bg-green-500"
           />
           <StatCard
-            title="Cursos Activos"
-            value="28"
+            title="Total Usuarios"
+            value={loading ? '...' : stats?.total_usuarios || 0}
             color="bg-purple-500"
           />
           <StatCard
-            title="Asistencia General"
-            value="94%"
+            title="Usuarios Activos"
+            value={loading ? '...' : stats?.usuarios_activos || 0}
             color="bg-yellow-500"
           />
         </div>
@@ -59,46 +80,24 @@ export default function DirectorDashboard() {
           <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
             <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Plan Diario</h2>
             <div className="space-y-3">
-              <InfoRow label="Estudiantes" value="320" />
-              <InfoRow label="Secciones" value="12" />
-              <InfoRow label="Promedio General" value="82.5" />
+              <InfoRow
+                label="Estudiantes"
+                value={loading ? '...' : stats?.plan_diario || 0}
+              />
             </div>
           </div>
 
           <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
             <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Plan Fin de Semana</h2>
             <div className="space-y-3">
-              <InfoRow label="Estudiantes" value="130" />
-              <InfoRow label="Secciones" value="5" />
-              <InfoRow label="Promedio General" value="79.8" />
+              <InfoRow
+                label="Estudiantes"
+                value={loading ? '...' : stats?.plan_fin_semana || 0}
+              />
             </div>
           </div>
         </div>
 
-        {/* Actividad Reciente */}
-        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
-          <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Actividad Reciente</h2>
-          <div className="space-y-4">
-            <ActivityItem
-              action="Nuevo docente registrado"
-              user="Ana Martínez"
-              time="Hace 2 horas"
-              type="success"
-            />
-            <ActivityItem
-              action="Calificaciones actualizadas"
-              user="Juan Pérez - Matemática 3ro"
-              time="Hace 4 horas"
-              type="info"
-            />
-            <ActivityItem
-              action="Nuevo estudiante inscrito"
-              user="Pedro González - Plan Diario"
-              time="Hace 1 día"
-              type="success"
-            />
-          </div>
-        </div>
       </DashboardLayout>
     </ProtectedRoute>
   );
@@ -125,27 +124,6 @@ function InfoRow({ label, value }) {
     <div className="flex justify-between items-center py-2 border-b border-gray-100">
       <span className="text-gray-600 text-sm sm:text-base">{label}</span>
       <span className="font-semibold text-gray-900 text-sm sm:text-base">{value}</span>
-    </div>
-  );
-}
-
-function ActivityItem({ action, user, time, type }) {
-  const colors = {
-    success: 'bg-green-100 text-green-800',
-    info: 'bg-blue-100 text-blue-800',
-    warning: 'bg-yellow-100 text-yellow-800'
-  };
-
-  return (
-    <div className="flex items-start space-x-3">
-      <div className={`${colors[type]} px-2 sm:px-3 py-1 rounded-full text-xs font-medium mt-1`}>
-        {type}
-      </div>
-      <div className="flex-1">
-        <p className="text-gray-900 font-medium text-sm sm:text-base">{action}</p>
-        <p className="text-xs sm:text-sm text-gray-600">{user}</p>
-        <p className="text-xs text-gray-400 mt-1">{time}</p>
-      </div>
     </div>
   );
 }

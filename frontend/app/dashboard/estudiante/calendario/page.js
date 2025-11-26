@@ -25,9 +25,7 @@ export default function EstudianteCalendarioPage() {
     const menuItems = [
         { href: '/dashboard/estudiante', iconType: 'home', label: 'Inicio' },
         { href: '/dashboard/estudiante/calendario', iconType: 'calendar', label: 'Calendario' },
-        { href: '/dashboard/estudiante/horario', iconType: 'calendar', label: 'Horario' },
-        { href: '/dashboard/estudiante/calificaciones', iconType: 'chart', label: 'Calificaciones' },
-        { href: '/dashboard/estudiante/tareas', iconType: 'document', label: 'Tareas' },
+        { href: '/dashboard/estudiante/perfil', iconType: 'user', label: 'Mi Perfil' },
     ];
 
     useEffect(() => {
@@ -153,8 +151,8 @@ export default function EstudianteCalendarioPage() {
                                     <button
                                         onClick={() => setViewMode('grid')}
                                         className={`p-2 rounded ${viewMode === 'grid'
-                                                ? 'bg-primary text-white'
-                                                : 'text-gray-600 hover:bg-gray-100'
+                                            ? 'bg-primary text-white'
+                                            : 'text-gray-600 hover:bg-gray-100'
                                             }`}
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,8 +167,8 @@ export default function EstudianteCalendarioPage() {
                                     <button
                                         onClick={() => setViewMode('list')}
                                         className={`p-2 rounded ${viewMode === 'list'
-                                                ? 'bg-primary text-white'
-                                                : 'text-gray-600 hover:bg-gray-100'
+                                            ? 'bg-primary text-white'
+                                            : 'text-gray-600 hover:bg-gray-100'
                                             }`}
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

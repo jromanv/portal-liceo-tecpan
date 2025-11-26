@@ -23,7 +23,7 @@ export default function DocenteCalendarioPage() {
     const menuItems = [
         { href: '/dashboard/docente', iconType: 'home', label: 'Inicio' },
         { href: '/dashboard/docente/calendario', iconType: 'calendar', label: 'Calendario' },
-        { href: '/dashboard/docente/cursos', iconType: 'book', label: 'Mis Cursos' },
+        { href: '/dashboard/docente/perfil', iconType: 'user', label: 'Mi Perfil' },
     ];
 
     // Determinar qué calendarios puede ver según jornada
@@ -179,8 +179,8 @@ export default function DocenteCalendarioPage() {
                                     <button
                                         onClick={() => setViewMode('grid')}
                                         className={`p-2 rounded ${viewMode === 'grid'
-                                                ? 'bg-primary text-white'
-                                                : 'text-gray-600 hover:bg-gray-100'
+                                            ? 'bg-primary text-white'
+                                            : 'text-gray-600 hover:bg-gray-100'
                                             }`}
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -195,8 +195,8 @@ export default function DocenteCalendarioPage() {
                                     <button
                                         onClick={() => setViewMode('list')}
                                         className={`p-2 rounded ${viewMode === 'list'
-                                                ? 'bg-primary text-white'
-                                                : 'text-gray-600 hover:bg-gray-100'
+                                            ? 'bg-primary text-white'
+                                            : 'text-gray-600 hover:bg-gray-100'
                                             }`}
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
