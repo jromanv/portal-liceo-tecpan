@@ -9,10 +9,9 @@ export default function EstudiantePerfilPage() {
 
     const menuItems = [
         { href: '/dashboard/estudiante', iconType: 'home', label: 'Inicio' },
-        { href: '/dashboard/estudiante/horario', iconType: 'calendar', label: 'Horario' },
+        { href: '/dashboard/estudiante/calendario', iconType: 'calendar', label: 'Calendario' },
         { href: '/dashboard/estudiante/perfil', iconType: 'user', label: 'Mi Perfil' },
     ];
-
     const getPlanLabel = (plan) => {
         const labels = {
             diario: 'Plan Diario',

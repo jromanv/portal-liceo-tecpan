@@ -43,19 +43,6 @@ export default function DocenteCalendarioPage() {
         loadActivities();
     }, [currentDate, activePlan]);
 
-    useEffect(() => {
-        const handleResize = () => {
-            if (window.innerWidth < 768) {
-                setViewMode('list');
-            } else {
-                setViewMode('grid');
-            }
-        };
-
-        handleResize();
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
 
     const loadActivities = async () => {
         try {
@@ -175,7 +162,7 @@ export default function DocenteCalendarioPage() {
                                 </div>
 
                                 {/* Toggle vista */}
-                                <div className="hidden md:flex items-center space-x-1 border border-gray-300 rounded-lg p-1">
+                                <div className="flex items-center space-x-1 border border-gray-300 rounded-lg p-1">
                                     <button
                                         onClick={() => setViewMode('grid')}
                                         className={`p-2 rounded ${viewMode === 'grid'
