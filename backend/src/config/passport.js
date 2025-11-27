@@ -114,23 +114,32 @@
 
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const { googleCallback } = require('../controllers/authController');
+// const { googleCallback } = require('../controllers/authController'); // Descomenta si lo usas
 
-// Evitamos que explote si faltan variables
-const clientID = process.env.GOOGLE_CLIENT_ID;
-const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+// Leer variables de entorno
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 
-if (clientID && clientSecret) {
-    passport.use(new GoogleStrategy({
-        clientID: clientID,
-        clientSecret: clientSecret,
-        callbackURL: "/api/auth/google/callback", // NOTA EL /api AQUÍ
-        proxy: true
-    }, async (accessToken, refreshToken, profile, done) => {
-        return done(null, profile);
-    }));
+// USAMOS LA URL ABSOLUTA PARA EVITAR EL ERROR 'SPLIT'
+const CALLBACK_URL = "https://portal-liceo-tecpan-production.up.railway.app/api/auth/google/callback";
+
+if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) {
+    passport.use(
+        new GoogleStrategy(
+            {
+                clientID: GOOGLE_CLIENT_ID,
+                clientSecret: GOOGLE_CLIENT_SECRET,
+                callbackURL: CALLBACK_URL, // <--- CAMBIO CLAVE: URL COMPLETA
+                proxy: true
+            },
+            async (accessToken, refreshToken, profile, done) => {
+                return done(null, profile);
+            }
+        )
+    );
+    console.log("✅ Google OAuth configurado correctamente.");
 } else {
-    console.log("Google Auth desactivado temporalmente (faltan credenciales), pero el sistema sigue vivo.");
+    console.warn("⚠️ Faltan credenciales de Google.");
 }
 
 passport.serializeUser((user, done) => done(null, user));
