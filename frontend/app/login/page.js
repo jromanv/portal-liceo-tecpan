@@ -86,8 +86,7 @@ function LoginContent() {
 
   const handleGoogleLogin = () => {
     setErrorFromGoogle(null);
-    // CORRECCIÓN: Agregamos /api manualmente
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/google`;
+    window.location.href = 'https://portal-liceo-tecpan-production.up.railway.app/api/auth/google';
   };
 
   const toggleTraditionalLogin = () => {

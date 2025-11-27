@@ -119,6 +119,7 @@ const pool = require('./database');
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const CALLBACK_URL = "https://portal-liceo-tecpan-production.up.railway.app/api/auth/google/callback";
+
 if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) {
     passport.use(
         new GoogleStrategy(

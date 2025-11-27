@@ -186,7 +186,7 @@ const googleCallback = (req, res) => {
     // para que coincida con tu página de Next.js
     // ---------------------------------------------------------
     res.redirect(
-      `${process.env.FRONTEND_URL}/login?token=${token}&user=${userDataEncoded}`
+      `https://portal.liceotecpan.com/login?token=${token}&user=${userDataEncoded}`
     );
 
   } catch (error) {
