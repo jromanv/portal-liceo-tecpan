@@ -22,8 +22,8 @@ export function AuthProvider({ children }) {
 
       if (token && savedUser) {
         try {
-          // Verificar que el token siga siendo válido
-          await axios.get('/auth/verify');
+          // Verificar que el token siga siendo válido          
+          await axios.get('/api/auth/verify')
           const userObj = JSON.parse(savedUser);
           console.log('Usuario autenticado:', userObj);
           setUser(userObj);
