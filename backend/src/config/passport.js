@@ -118,19 +118,15 @@ const pool = require('./database');
 // Leer variables de entorno
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-
-// ✅ CAMBIO IMPORTANTE: Usamos tu dominio oficial .com
-// Esto debe coincidir EXACTAMENTE con lo que pusiste en Google Cloud Console
-const CALLBACK_URL = "https://portal.liceotecpan.com/api/auth/google/callback";
-
+const CALLBACK_URL = "https://portal-liceo-tecpan-production.up.railway.app/api/auth/google/callback";
 if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) {
     passport.use(
         new GoogleStrategy(
             {
                 clientID: GOOGLE_CLIENT_ID,
                 clientSecret: GOOGLE_CLIENT_SECRET,
-                callbackURL: CALLBACK_URL,
-                proxy: true // Vital para Railway
+                callbackURL: CALLBACK_URL, // <--- Apunta al Backend
+                proxy: true
             },
             async (accessToken, refreshToken, profile, done) => {
                 try {
