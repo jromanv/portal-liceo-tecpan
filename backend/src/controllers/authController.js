@@ -135,7 +135,6 @@ const verifyTokenController = async (req, res) => {
   }
 };
 
-
 // Callback de Google OAuth (después de autenticación exitosa)
 const googleCallback = (req, res) => {
   try {
@@ -155,7 +154,6 @@ const googleCallback = (req, res) => {
     }
 
     // 2. Generar token JWT
-    // (Asegúrate de que la función generateToken esté importada arriba)
     const token = generateToken({
       id: req.user.id,
       email: req.user.email,
@@ -169,7 +167,6 @@ const googleCallback = (req, res) => {
       nombre: req.user.nombre,
       apellido: req.user.apellido,
       rol: req.user.rol,
-      // Incluye solo los datos necesarios
       codigo_personal: req.user.codigo_personal,
       plan: req.user.plan,
       jornada: req.user.jornada,
@@ -180,13 +177,8 @@ const googleCallback = (req, res) => {
     // 4. Codificar datos para URL
     const userDataEncoded = encodeURIComponent(JSON.stringify(userData));
 
-    // ---------------------------------------------------------
-    // ¡AQUÍ ESTABA EL ERROR!
-    // Cambiamos "/auth/google/callback" por "/login"
-    // para que coincida con tu página de Next.js
-    // ---------------------------------------------------------
     res.redirect(
-      `https://portal.liceotecpan.com/login?token=${token}&user=${userDataEncoded}`
+      `https://portal.liceotecpan.com/auth/google/callback?token=${token}&user=${userDataEncoded}`
     );
 
   } catch (error) {

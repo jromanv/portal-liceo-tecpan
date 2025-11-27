@@ -6,11 +6,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 function GoogleCallbackContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [status, setStatus] = useState('processing'); // processing, success, error
+    const [status, setStatus] = useState('processing');
 
     useEffect(() => {
         const handleCallback = () => {
-            // Obtener token y datos del usuario de los query params
             const token = searchParams.get('token');
             const userEncoded = searchParams.get('user');
             const error = searchParams.get('error');
@@ -60,14 +59,23 @@ function GoogleCallbackContent() {
 
                 setStatus('success');
 
-                // Redirigir según rol
+                // Redirigir según rol - SIN FALLBACK A /dashboard
                 const dashboardRoutes = {
                     estudiante: '/dashboard/estudiante',
                     docente: '/dashboard/docente',
                     director: '/dashboard/director',
                 };
 
-                const route = dashboardRoutes[user.rol] || '/dashboard';
+                const route = dashboardRoutes[user.rol];
+
+                if (!route) {
+                    console.error('Rol desconocido:', user.rol);
+                    setStatus('error');
+                    setTimeout(() => {
+                        router.push('/login?error=rol_invalido');
+                    }, 2000);
+                    return;
+                }
 
                 console.log('Redirigiendo a:', route);
 
