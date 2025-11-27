@@ -4,6 +4,9 @@ import '../styles/globals.css';
 export const metadata = {
   title: 'Liceo Tecpán - Portal Educativo',
   description: 'Sistema de Gestión Educativa',
+  icons: {
+    icon: '/icon.png',
+  },
 };
 
 export default function RootLayout({ children }) {
