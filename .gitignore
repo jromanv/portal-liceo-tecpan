@@ -57,3 +57,12 @@ coverage/
 *.temp
 .tmp/
 .temp/
+
+# Testing
+coverage/
+
+# Vercel
+.vercel
+
+# Railway
+.railway

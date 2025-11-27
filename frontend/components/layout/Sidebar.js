@@ -74,10 +74,16 @@ export default function Sidebar({ menuItems, isOpen, onClose, isCollapsed, onTog
                 >
                   <Link
                     href={item.href}
-                    onClick={onClose}
+                    onClick={(e) => {
+                      // Solo cerrar el sidebar en móvil (cuando isOpen es true)
+                      // En desktop, no hacer nada para mantener el estado collapsed
+                      if (isOpen) {
+                        onClose();
+                      }
+                    }}
                     className={`flex items-center px-4 py-3 rounded-lg transition-all duration-200 ${isActive
-                        ? 'bg-white text-primary shadow-md'
-                        : 'text-white hover:bg-primary-light'
+                      ? 'bg-white text-primary shadow-md'
+                      : 'text-white hover:bg-primary-light'
                       } ${isCollapsed ? 'justify-center' : ''}`}
                   >
                     <IconComponent type={item.iconType} />

@@ -33,7 +33,7 @@ export default function UsuariosPage() {
   });
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 10,
+    limit: 25,
     total: 0,
     totalPages: 0,
   });

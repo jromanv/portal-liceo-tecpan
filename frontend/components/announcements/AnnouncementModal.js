@@ -9,6 +9,7 @@ export default function AnnouncementModal({ isOpen, onClose, onSave, announcemen
         tipo: 'general',
         dirigido_a: 'todos',
         plan: 'todos',
+        jornada: 'todos',
         activo: true,
     });
 
@@ -23,6 +24,7 @@ export default function AnnouncementModal({ isOpen, onClose, onSave, announcemen
                 tipo: announcement.tipo || 'general',
                 dirigido_a: announcement.dirigido_a || 'todos',
                 plan: announcement.plan || 'todos',
+                jornada: announcement.jornada || 'todos',
                 activo: announcement.activo !== undefined ? announcement.activo : true,
             });
         } else {
@@ -32,6 +34,7 @@ export default function AnnouncementModal({ isOpen, onClose, onSave, announcemen
                 tipo: 'general',
                 dirigido_a: 'todos',
                 plan: 'todos',
+                jornada: 'todos',
                 activo: true,
             });
         }
@@ -44,7 +47,6 @@ export default function AnnouncementModal({ isOpen, onClose, onSave, announcemen
             ...prev,
             [name]: type === 'checkbox' ? checked : value,
         }));
-        // Limpiar error del campo
         if (errors[name]) {
             setErrors((prev) => ({ ...prev, [name]: '' }));
         }
@@ -87,7 +89,6 @@ export default function AnnouncementModal({ isOpen, onClose, onSave, announcemen
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                {/* Header */}
                 <div className="flex justify-between items-center p-6 border-b border-gray-200">
                     <h2 className="text-xl font-bold text-gray-900">
                         {mode === 'create' ? 'Crear Anuncio' : 'Editar Anuncio'}
@@ -103,11 +104,10 @@ export default function AnnouncementModal({ isOpen, onClose, onSave, announcemen
                     </button>
                 </div>
 
-                {/* Form */}
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                     {/* Título */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Título *</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Título</label>
                         <input
                             type="text"
                             name="titulo"
@@ -123,7 +123,7 @@ export default function AnnouncementModal({ isOpen, onClose, onSave, announcemen
 
                     {/* Contenido */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Contenido *</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Contenido</label>
                         <textarea
                             name="contenido"
                             value={formData.contenido}
@@ -140,7 +140,7 @@ export default function AnnouncementModal({ isOpen, onClose, onSave, announcemen
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Tipo */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Tipo *</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
                             <select
                                 name="tipo"
                                 value={formData.tipo}
@@ -156,7 +156,7 @@ export default function AnnouncementModal({ isOpen, onClose, onSave, announcemen
 
                         {/* Dirigido a */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Dirigido a *</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Dirigido a</label>
                             <select
                                 name="dirigido_a"
                                 value={formData.dirigido_a}
@@ -174,7 +174,7 @@ export default function AnnouncementModal({ isOpen, onClose, onSave, announcemen
                     {/* Plan (solo si es para estudiantes) */}
                     {formData.dirigido_a === 'estudiantes' && (
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Plan *</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Plan de Estudiantes</label>
                             <select
                                 name="plan"
                                 value={formData.plan}
@@ -185,6 +185,24 @@ export default function AnnouncementModal({ isOpen, onClose, onSave, announcemen
                                 <option value="todos">Todos los planes</option>
                                 <option value="diario">Solo Plan Diario</option>
                                 <option value="fin_de_semana">Solo Plan Fin de Semana</option>
+                            </select>
+                        </div>
+                    )}
+
+                    {/* Jornada (solo si es para docentes) */}
+                    {formData.dirigido_a === 'docentes' && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Jornada de Docentes</label>
+                            <select
+                                name="jornada"
+                                value={formData.jornada}
+                                onChange={handleChange}
+                                disabled={loading}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                            >
+                                <option value="todos">Todas las jornadas</option>
+                                <option value="diario">Solo Jornada Diaria</option>
+                                <option value="fin_de_semana">Solo Jornada Fin de Semana</option>
                             </select>
                         </div>
                     )}
@@ -207,14 +225,12 @@ export default function AnnouncementModal({ isOpen, onClose, onSave, announcemen
                         </div>
                     )}
 
-                    {/* Error general */}
                     {errors.general && (
                         <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
                             <p className="text-sm text-red-700">{errors.general}</p>
                         </div>
                     )}
 
-                    {/* Botones */}
                     <div className="flex justify-end space-x-3 pt-4">
                         <button
                             type="button"

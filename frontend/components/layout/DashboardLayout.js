@@ -1,12 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 
 export default function DashboardLayout({ children, userName, userRole, menuItems }) {
   const [sidebarOpen, setSidebarOpen] = useState(false); // Para móvil
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // Para desktop
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    // Inicializar desde localStorage si existe
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sidebarCollapsed');
+      return saved === 'true';
+    }
+    return false;
+  });
+
+  // Guardar el estado en localStorage cuando cambie
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sidebarCollapsed', sidebarCollapsed.toString());
+    }
+  }, [sidebarCollapsed]);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
