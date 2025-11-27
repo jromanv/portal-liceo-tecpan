@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import axios from '@/lib/axios';
 
 const AuthContext = createContext();
@@ -10,7 +10,6 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const pathname = usePathname();
 
   // Verificar si hay usuario guardado al cargar
   useEffect(() => {
@@ -22,17 +21,27 @@ export function AuthProvider({ children }) {
 
       if (token && savedUser) {
         try {
-          // Verificar que el token siga siendo válido          
-          await axios.get('/api/auth/verify')
+          // Verificar que el token siga siendo válido
+          await axios.get('/auth/verify'); // CORREGIDO - sin /api
+
           const userObj = JSON.parse(savedUser);
           console.log('Usuario autenticado:', userObj);
           setUser(userObj);
         } catch (error) {
-          console.error('Token inválido:', error);
-          // Token inválido, limpiar
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          setUser(null);
+          console.error('Token inválido:', error.response?.status, error.response?.data);
+
+          // Solo limpiar si el token está realmente inválido (401, 403)
+          if (error.response?.status === 401 || error.response?.status === 403) {
+            console.log('Limpiando sesión por token inválido');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            setUser(null);
+          } else {
+            // Si es error de red u otro, mantener sesión
+            console.log('Error de verificación pero manteniendo sesión');
+            const userObj = JSON.parse(savedUser);
+            setUser(userObj);
+          }
         }
       } else {
         console.log('ℹNo hay sesión guardada');
@@ -66,15 +75,12 @@ export function AuthProvider({ children }) {
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userData));
 
-      console.log('Datos guardados en localStorage');
+      console.log('atos guardados en localStorage');
 
       // Actualizar estado
       setUser(userData);
 
       console.log('Login exitoso, redirigiendo...', { rol: userData.rol });
-
-      // Esperar un momento antes de redirigir
-      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Redireccionar según rol
       const dashboardRoutes = {
@@ -86,14 +92,14 @@ export function AuthProvider({ children }) {
       const route = dashboardRoutes[userData.rol] || '/dashboard';
       console.log('Redirigiendo a:', route);
 
-      router.push(route);
+      // Usar recarga completa para asegurar que el contexto se actualice
+      window.location.href = route;
 
       return { success: true };
     } catch (error) {
       console.error('Error en login:', error);
       console.error('Respuesta de error:', error.response?.data);
 
-      // Verificar si hay un mensaje de error del servidor
       const errorMessage = error.response?.data?.message ||
         error.message ||
         'Error al iniciar sesión';
@@ -107,14 +113,14 @@ export function AuthProvider({ children }) {
 
   // Logout
   const logout = () => {
-    console.log('🚪 Cerrando sesión...');
+    console.log('Cerrando sesión...');
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
     router.push('/login');
   };
 
-  //Función para actualizar usuario externamente
+  // Función para actualizar usuario externamente
   const updateUser = (userData) => {
     console.log('Actualizando usuario en contexto:', userData);
     setUser(userData);
@@ -126,7 +132,7 @@ export function AuthProvider({ children }) {
       loading,
       login,
       logout,
-      updateUser  // ← AGREGAR ESTO
+      updateUser
     }}>
       {children}
     </AuthContext.Provider>
