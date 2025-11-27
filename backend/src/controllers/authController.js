@@ -135,54 +135,64 @@ const verifyTokenController = async (req, res) => {
   }
 };
 
+
 // Callback de Google OAuth (después de autenticación exitosa)
 const googleCallback = (req, res) => {
   try {
-    // Si llegamos aquí, Passport ya validó al usuario
+    // 1. Verificación de seguridad: Si Passport falló
     if (!req.user) {
-      // Autenticación fallida - obtener el mensaje de error si existe
       const errorInfo = req.authInfo || {};
       let errorMessage = 'auth_failed';
 
       if (errorInfo.message) {
-        // Codificar el mensaje para pasarlo como query param
         errorMessage = encodeURIComponent(errorInfo.message);
       }
 
-      console.log(' Autenticación Google fallida:', errorInfo.message || 'Sin mensaje');
+      console.log('Autenticación Google fallida:', errorInfo.message || 'Sin mensaje');
 
+      // Redirigir al login con el error
       return res.redirect(`${process.env.FRONTEND_URL}/login?error=${errorMessage}`);
     }
 
-    // Generar token JWT
+    // 2. Generar token JWT
+    // (Asegúrate de que la función generateToken esté importada arriba)
     const token = generateToken({
       id: req.user.id,
       email: req.user.email,
       rol: req.user.rol,
     });
 
-    // Preparar datos del usuario
+    // 3. Preparar datos del usuario para el Frontend
     const userData = {
       id: req.user.id,
       email: req.user.email,
       nombre: req.user.nombre,
       apellido: req.user.apellido,
       rol: req.user.rol,
+      // Incluye solo los datos necesarios
       codigo_personal: req.user.codigo_personal,
       plan: req.user.plan,
       jornada: req.user.jornada,
     };
 
-    console.log('Generando token y redirigiendo al frontend');
+    console.log('Token generado. Redirigiendo al Login del Frontend...');
 
-    // Redirigir al frontend con token y datos en query params
+    // 4. Codificar datos para URL
     const userDataEncoded = encodeURIComponent(JSON.stringify(userData));
+
+    // ---------------------------------------------------------
+    // ¡AQUÍ ESTABA EL ERROR!
+    // Cambiamos "/auth/google/callback" por "/login"
+    // para que coincida con tu página de Next.js
+    // ---------------------------------------------------------
     res.redirect(
-      `${process.env.FRONTEND_URL}/auth/google/callback?token=${token}&user=${userDataEncoded}`
+      `${process.env.FRONTEND_URL}/login?token=${token}&user=${userDataEncoded}`
     );
+
   } catch (error) {
-    console.error('Error en callback de Google:', error);
-    const errorMessage = encodeURIComponent('Error en el servidor. Por favor, intenta nuevamente.');
+    console.error('Error crítico en callback de Google:', error);
+    const errorMessage = encodeURIComponent('server_error');
+    // En caso de error fatal, volver al login
     res.redirect(`${process.env.FRONTEND_URL}/login?error=${errorMessage}`);
   }
 };
