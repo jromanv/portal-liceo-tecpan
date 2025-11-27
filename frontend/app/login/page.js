@@ -14,6 +14,38 @@ function LoginContent() {
   const [showTraditionalLogin, setShowTraditionalLogin] = useState(false);
 
   useEffect(() => {
+    // -----------------------------------------------------------------------
+    // 1. NUEVA LÓGICA: ATRAVAR EL TOKEN DE GOOGLE
+    // -----------------------------------------------------------------------
+    const token = searchParams.get('token');
+
+    if (token) {
+      console.log("🔑 Token detectado en URL, guardando sesión...");
+
+      // Guardamos el token en el almacenamiento local
+      localStorage.setItem('token', token);
+
+      // Opcional: Si tu backend también manda datos del usuario en la URL
+      const userData = searchParams.get('user');
+      if (userData) {
+        try {
+          // A veces viene como string JSON, a veces como objeto directo
+          // Guardarlo ayuda a que la UI cargue más rápido
+          localStorage.setItem('user', userData);
+        } catch (e) {
+          console.error("Error guardando datos de usuario iniciales", e);
+        }
+      }
+
+      // IMPORTANTE: Forzamos una redirección completa para que el 
+      // AuthContext se reinicie y lea el nuevo token.
+      window.location.href = '/dashboard';
+      return; // Detenemos la ejecución aquí para que no haga nada más
+    }
+
+    // -----------------------------------------------------------------------
+    // 2. TU LÓGICA ACTUAL: MANEJO DE ERRORES
+    // -----------------------------------------------------------------------
     const error = searchParams.get('error');
     if (error) {
       const decodedError = decodeURIComponent(error);
