@@ -48,7 +48,7 @@ export function AuthProvider({ children }) {
     try {
       console.log('Intentando login...', { email });
 
-      const response = await axios.post('/api/auth/login', { email, password });
+      const response = await axios.post('/auth/login', { email, password });
 
       console.log('Respuesta del servidor:', response.data);
 
