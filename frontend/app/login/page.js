@@ -54,7 +54,8 @@ function LoginContent() {
 
   const handleGoogleLogin = () => {
     setErrorFromGoogle(null);
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google`;
+    // Agregamos /api antes de /auth
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/google`;
   };
 
   const toggleTraditionalLogin = () => {

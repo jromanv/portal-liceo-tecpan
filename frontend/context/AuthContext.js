@@ -25,17 +25,17 @@ export function AuthProvider({ children }) {
           // Verificar que el token siga siendo válido
           await axios.get('/auth/verify');
           const userObj = JSON.parse(savedUser);
-          console.log('✅ Usuario autenticado:', userObj);
+          console.log('Usuario autenticado:', userObj);
           setUser(userObj);
         } catch (error) {
-          console.error('❌ Token inválido:', error);
+          console.error('Token inválido:', error);
           // Token inválido, limpiar
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           setUser(null);
         }
       } else {
-        console.log('ℹ️ No hay sesión guardada');
+        console.log('ℹNo hay sesión guardada');
       }
       setLoading(false);
     };
@@ -46,14 +46,14 @@ export function AuthProvider({ children }) {
   // Login
   const login = async (email, password) => {
     try {
-      console.log('🔐 Intentando login...', { email });
+      console.log('Intentando login...', { email });
 
-      const response = await axios.post('/auth/login', { email, password });
+      const response = await axios.post('/api/auth/login', { email, password });
 
-      console.log('📥 Respuesta del servidor:', response.data);
+      console.log('Respuesta del servidor:', response.data);
 
       if (!response.data.success) {
-        console.log('❌ Login fallido:', response.data.message);
+        console.log('Login fallido:', response.data.message);
         return {
           success: false,
           message: response.data.message || 'Error al iniciar sesión',
@@ -94,9 +94,9 @@ export function AuthProvider({ children }) {
       console.error('📄 Respuesta de error:', error.response?.data);
 
       // Verificar si hay un mensaje de error del servidor
-      const errorMessage = error.response?.data?.message || 
-                          error.message || 
-                          'Error al iniciar sesión';
+      const errorMessage = error.response?.data?.message ||
+        error.message ||
+        'Error al iniciar sesión';
 
       return {
         success: false,
