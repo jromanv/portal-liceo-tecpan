@@ -9,20 +9,21 @@ passport.use(
             clientID: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
             callbackURL: process.env.GOOGLE_CALLBACK_URL,
+            proxy: true
         },
         async (accessToken, refreshToken, profile, done) => {
             try {
                 // Extraer email del perfil de Google
                 const email = profile.emails[0].value.toLowerCase();
 
-                console.log('🔐 Autenticación Google:', { email, name: profile.displayName });
+                console.log('Autenticación Google:', { email, name: profile.displayName });
 
                 // Validar dominio permitido
                 const allowedDomains = process.env.ALLOWED_DOMAINS.split(',');
                 const domain = email.split('@')[1];
 
                 if (!allowedDomains.includes(domain)) {
-                    console.log('❌ Dominio no permitido:', domain);
+                    console.log('Dominio no permitido:', domain);
                     return done(null, false, {
                         message: 'Solo se permiten correos institucionales (@liceotecpan.edu.gt o @liceotecpan.com)'
                     });
@@ -84,11 +85,11 @@ passport.use(
                     }
                 }
 
-                console.log('✅ Usuario autenticado:', { id: userData.id, rol: userData.rol });
+                console.log('Usuario autenticado:', { id: userData.id, rol: userData.rol });
 
                 return done(null, userData);
             } catch (error) {
-                console.error('❌ Error en autenticación Google:', error);
+                console.error('Error en autenticación Google:', error);
                 return done(error, null);
             }
         }
