@@ -18,7 +18,7 @@ export function AuthProvider({ children }) {
       const token = localStorage.getItem('token');
       const savedUser = localStorage.getItem('user');
 
-      console.log('🔍 Verificando auth...', { token: !!token, savedUser: !!savedUser });
+      console.log('Verificando auth...', { token: !!token, savedUser: !!savedUser });
 
       if (token && savedUser) {
         try {
@@ -66,12 +66,12 @@ export function AuthProvider({ children }) {
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userData));
 
-      console.log('💾 Datos guardados en localStorage');
+      console.log('Datos guardados en localStorage');
 
       // Actualizar estado
       setUser(userData);
 
-      console.log('✅ Login exitoso, redirigiendo...', { rol: userData.rol });
+      console.log('Login exitoso, redirigiendo...', { rol: userData.rol });
 
       // Esperar un momento antes de redirigir
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -84,14 +84,14 @@ export function AuthProvider({ children }) {
       };
 
       const route = dashboardRoutes[userData.rol] || '/dashboard';
-      console.log('🚀 Redirigiendo a:', route);
+      console.log('Redirigiendo a:', route);
 
       router.push(route);
 
       return { success: true };
     } catch (error) {
-      console.error('❌ Error en login:', error);
-      console.error('📄 Respuesta de error:', error.response?.data);
+      console.error('Error en login:', error);
+      console.error('Respuesta de error:', error.response?.data);
 
       // Verificar si hay un mensaje de error del servidor
       const errorMessage = error.response?.data?.message ||
@@ -114,8 +114,20 @@ export function AuthProvider({ children }) {
     router.push('/login');
   };
 
+  //Función para actualizar usuario externamente
+  const updateUser = (userData) => {
+    console.log('Actualizando usuario en contexto:', userData);
+    setUser(userData);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      login,
+      logout,
+      updateUser  // ← AGREGAR ESTO
+    }}>
       {children}
     </AuthContext.Provider>
   );

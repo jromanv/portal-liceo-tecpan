@@ -2,40 +2,31 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext'; // ← AGREGAR ESTO
 
 function GoogleCallbackContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { setUser } = useAuth(); // ← AGREGAR ESTO
     const [status, setStatus] = useState('processing');
 
     useEffect(() => {
-        const handleCallback = () => {
+        const handleCallback = async () => { // ← HACER ASYNC
             const token = searchParams.get('token');
             const userEncoded = searchParams.get('user');
             const error = searchParams.get('error');
 
             console.log('Callback de Google recibido:', { token: !!token, user: !!userEncoded, error });
 
-            // Si hay error
             if (error) {
                 console.error('Error en autenticación:', error);
                 setStatus('error');
-
-                let errorMessage = 'Error al iniciar sesión con Google';
-
-                if (error === 'auth_failed') {
-                    errorMessage = 'No tienes autorización para acceder. Contacta al director.';
-                } else if (error === 'server_error') {
-                    errorMessage = 'Error en el servidor. Intenta nuevamente.';
-                }
-
                 setTimeout(() => {
-                    router.push(`/login?error=${encodeURIComponent(errorMessage)}`);
+                    router.push(`/login?error=${encodeURIComponent(error)}`);
                 }, 2000);
                 return;
             }
 
-            // Si no hay token o usuario
             if (!token || !userEncoded) {
                 console.error('Token o usuario no recibidos');
                 setStatus('error');
@@ -46,20 +37,19 @@ function GoogleCallbackContent() {
             }
 
             try {
-                // Decodificar datos del usuario
                 const user = JSON.parse(decodeURIComponent(userEncoded));
-
                 console.log('Datos recibidos:', { user });
 
                 // Guardar en localStorage
                 localStorage.setItem('token', token);
                 localStorage.setItem('user', JSON.stringify(user));
-
                 console.log('Datos guardados en localStorage');
+
+                //ESPERAR para asegurar sincronización
+                await new Promise(resolve => setTimeout(resolve, 100));
 
                 setStatus('success');
 
-                // Redirigir según rol - SIN FALLBACK A /dashboard
                 const dashboardRoutes = {
                     estudiante: '/dashboard/estudiante',
                     docente: '/dashboard/docente',
@@ -79,9 +69,11 @@ function GoogleCallbackContent() {
 
                 console.log('Redirigiendo a:', route);
 
+                // USAR RECARGA COMPLETA
                 setTimeout(() => {
-                    router.push(route);
-                }, 1000);
+                    window.location.href = route;
+                }, 500);
+
             } catch (error) {
                 console.error('Error al procesar callback:', error);
                 setStatus('error');
