@@ -65,18 +65,18 @@ export const isSameDay = (date1, date2) => {
 export const getActivitiesForDay = (activities, day) => {
     if (!day || !activities) return [];
 
-    const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(
-        day.getDate()
-    ).padStart(2, '0')}`;
+    const targetYear = day.getFullYear();
+    const targetMonth = day.getMonth();
+    const targetDate = day.getDate();
 
     return activities.filter((activity) => {
         if (!activity.fecha) return false;
 
-        const activityDate = new Date(activity.fecha);
-        const activityDateStr = `${activityDate.getFullYear()}-${String(activityDate.getMonth() + 1).padStart(2, '0')}-${String(
-            activityDate.getDate()
-        ).padStart(2, '0')}`;
+        const parts = activity.fecha.split('T')[0].split('-');
+        const actYear = parseInt(parts[0]);
+        const actMonth = parseInt(parts[1]) - 1;
+        const actDate = parseInt(parts[2]);
 
-        return activityDateStr === dateStr;
+        return actYear === targetYear && actMonth === targetMonth && actDate === targetDate;
     });
 };
