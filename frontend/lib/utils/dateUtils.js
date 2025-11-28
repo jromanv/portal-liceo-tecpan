@@ -42,10 +42,10 @@ export const formatDateForInput = (date) => {
 // Formatear fecha para display (DD/MM/YYYY)
 export const formatDateDisplay = (date) => {
     if (!date) return '';
-    const d = new Date(date);
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
+    const parts = date.split('T')[0].split('-');
+    const year = parts[0];
+    const month = parts[1];
+    const day = parts[2];
     return `${day}/${month}/${year}`;
 };
 
