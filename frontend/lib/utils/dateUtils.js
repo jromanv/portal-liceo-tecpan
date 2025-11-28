@@ -62,9 +62,21 @@ export const isSameDay = (date1, date2) => {
 };
 
 // Obtener actividades de un día específico
-export const getActivitiesForDay = (activities, date) => {
-    if (!date || !activities) return [];
-    return activities.filter((activity) =>
-        isSameDay(new Date(activity.fecha), date)
-    );
+export const getActivitiesForDay = (activities, day) => {
+    if (!day || !activities) return [];
+
+    const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(
+        day.getDate()
+    ).padStart(2, '0')}`;
+
+    return activities.filter((activity) => {
+        if (!activity.fecha) return false;
+
+        const activityDate = new Date(activity.fecha);
+        const activityDateStr = `${activityDate.getFullYear()}-${String(activityDate.getMonth() + 1).padStart(2, '0')}-${String(
+            activityDate.getDate()
+        ).padStart(2, '0')}`;
+
+        return activityDateStr === dateStr;
+    });
 };

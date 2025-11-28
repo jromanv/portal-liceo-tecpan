@@ -240,13 +240,13 @@ const createActivity = async (req, res) => {
         // Insertar actividad (el código se genera automáticamente por el trigger)
         const result = await pool.query(
             `INSERT INTO actividades_calendario (
-        actividad,
-        fecha,
-        hora,
-        responsable,
-        categoria_id,
-        plan,
-        dirigido_a,
+       actividad,
+       fecha ? fecha + 'T00:00:00' : null,
+       hora,
+       responsable,
+       categoria_id,
+       plan,
+       dirigido_a,
         created_by
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *`,
@@ -331,8 +331,8 @@ const updateActivity = async (req, res) => {
 
         if (fecha !== undefined) {
             if (hasUpdates) updateQuery += ',';
-            updateQuery += ` fecha = $${paramCount}`;
-            params.push(fecha);
+            updateQuery += ` fecha = $${paramCount}::timestamp`;
+            params.push(fecha ? fecha + 'T00:00:00' : null);
             paramCount++;
             hasUpdates = true;
         }
