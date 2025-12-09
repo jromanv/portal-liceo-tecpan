@@ -83,12 +83,13 @@ export default function BulkUploadModal({ isOpen, onClose, onSuccess }) {
   };
 
   const downloadTemplate = () => {
-    const csvContent = `email,password,rol,nombre,apellido,codigo_personal,plan,jornada
-estudiante1@liceotecpan.edu.gt,liceo2025,estudiante,Pedro,González,EST-2025-010,diario,
-estudiante2@liceotecpan.edu.gt,liceo2025,estudiante,Laura,Martínez,EST-2025-011,fin_de_semana,
-docente1@liceotecpan.edu.gt,liceo2025,docente,Carlos,López,DOC-010,,diario
-docente2@liceotecpan.edu.gt,liceo2025,docente,Ana,Pérez,DOC-011,,ambas
-director1@liceotecpan.edu.gt,liceo2025,director,Roberto,Ramírez,,,`;
+    const csvContent = `email,password,rol,nombre,apellido,codigo_personal,plan,jornada,grado
+estudiante1@liceotecpan.edu.gt,liceo2025,estudiante,Pedro,González,EST-2025-010,diario,,Primero Básico con Orientación en Computación A
+estudiante2@liceotecpan.edu.gt,liceo2025,estudiante,Laura,Martínez,EST-2025-011,fin_de_semana,,Primero Básico con Orientación en Computación B
+estudiante3@liceotecpan.edu.gt,liceo2025,estudiante,Sofía,Hernández,EST-2025-012,diario,,
+docente1@liceotecpan.edu.gt,liceo2025,docente,Carlos,López,DOC-010,,diario,
+docente2@liceotecpan.edu.gt,liceo2025,docente,Ana,Pérez,DOC-011,,ambas,
+director1@liceotecpan.edu.gt,liceo2025,director,Roberto,Ramírez,,,,`;
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');

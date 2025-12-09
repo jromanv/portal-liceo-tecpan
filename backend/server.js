@@ -2,7 +2,16 @@ const app = require('./src/app');
 const pool = require('./src/config/database');
 require('dotenv').config();
 
+const authRoutes = require('./src/routes/auth.routes');
+const userRoutes = require('./src/routes/user.routes');
+const academicoRoutes = require('./src/routes/academicoRoutes');
+
 const PORT = process.env.PORT || 5000;
+
+// Usar rutas
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/academico', academicoRoutes);
 
 // Probar conexión a la base de datos
 pool.query('SELECT NOW()', (err, res) => {

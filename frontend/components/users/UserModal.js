@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import axios from '@/lib/axios';
+import Modal from '@/components/ui/Modal';
 
 export default function UserModal({ isOpen, onClose, onSave, user, mode }) {
   const [formData, setFormData] = useState({
@@ -13,11 +15,61 @@ export default function UserModal({ isOpen, onClose, onSave, user, mode }) {
     plan: 'diario',
     jornada: 'diario',
     activo: true,
+    gradoCicloId: '', // ⭐ NUEVO
   });
 
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [gradosDisponibles, setGradosDisponibles] = useState([]); // ⭐ NUEVO
+  const [loadingGrados, setLoadingGrados] = useState(false); // ⭐ NUEVO
+
+  // ⭐ CARGAR GRADOS DEL CICLO ACTIVO
+  useEffect(() => {
+    if (isOpen && formData.rol === 'estudiante' && mode === 'create') {
+      cargarGrados();
+    }
+  }, [isOpen, formData.rol, mode]);
+
+  const cargarGrados = async () => {
+    try {
+      setLoadingGrados(true);
+      // Obtener ciclo activo
+      const cicloResponse = await axios.get('/academico/ciclos/activo');
+      const ciclo = cicloResponse.data.data;
+
+      if (ciclo) {
+        // Obtener grados del ciclo activo que coincidan con el plan del estudiante
+        const gradosResponse = await axios.get(`/academico/grados-ciclo/${ciclo.id}`);
+
+        // Filtrar grados según el plan seleccionado
+        const gradosFiltrados = gradosResponse.data.data.filter(grado => {
+          if (formData.plan === 'diario') {
+            return grado.plan === 'diario';
+          } else if (formData.plan === 'fin_de_semana') {
+            return grado.plan === 'fin_de_semana';
+          }
+          return false;
+        });
+
+        setGradosDisponibles(gradosFiltrados);
+      }
+    } catch (error) {
+      console.error('Error al cargar grados:', error);
+      setGradosDisponibles([]);
+    } finally {
+      setLoadingGrados(false);
+    }
+  };
+
+  // ⭐ RECARGAR GRADOS AL CAMBIAR PLAN
+  useEffect(() => {
+    if (formData.rol === 'estudiante' && mode === 'create') {
+      cargarGrados();
+      // Limpiar grado seleccionado al cambiar plan
+      setFormData(prev => ({ ...prev, gradoCicloId: '' }));
+    }
+  }, [formData.plan]);
 
   useEffect(() => {
     if (user && mode === 'edit') {
@@ -31,6 +83,7 @@ export default function UserModal({ isOpen, onClose, onSave, user, mode }) {
         plan: user.plan || 'diario',
         jornada: user.jornada || 'diario',
         activo: user.activo !== undefined ? user.activo : true,
+        gradoCicloId: '', // No se puede cambiar en edición
       });
     } else {
       setFormData({
@@ -43,10 +96,12 @@ export default function UserModal({ isOpen, onClose, onSave, user, mode }) {
         plan: 'diario',
         jornada: 'diario',
         activo: true,
+        gradoCicloId: '',
       });
     }
     setErrors({});
     setShowPassword(false);
+    setGradosDisponibles([]);
   }, [user, mode, isOpen]);
 
   const handleChange = (e) => {
@@ -116,7 +171,18 @@ export default function UserModal({ isOpen, onClose, onSave, user, mode }) {
     setLoading(true);
 
     try {
-      await onSave(formData);
+      // ⭐ Preparar datos para enviar
+      const dataToSend = { ...formData };
+
+      // Si gradoCicloId está vacío, no lo enviamos
+      if (!dataToSend.gradoCicloId) {
+        delete dataToSend.gradoCicloId;
+      } else {
+        // Convertir a número
+        dataToSend.gradoCicloId = parseInt(dataToSend.gradoCicloId);
+      }
+
+      await onSave(dataToSend);
       onClose();
     } catch (error) {
       setErrors({ general: error.message || 'Error al guardar usuario' });
@@ -128,31 +194,14 @@ export default function UserModal({ isOpen, onClose, onSave, user, mode }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">
-            {mode === 'create' ? 'Crear Usuario' : 'Editar Usuario'}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
-            disabled={loading}
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={mode === 'create' ? 'Crear Usuario' : 'Editar Usuario'}
+      maxWidth="max-w-2xl"
+    >
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Email */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -297,6 +346,40 @@ export default function UserModal({ isOpen, onClose, onSave, user, mode }) {
             </div>
           )}
 
+          {/* ⭐ GRADO (solo para estudiantes en modo crear) */}
+          {formData.rol === 'estudiante' && mode === 'create' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Grado (opcional)
+              </label>
+              <select
+                name="gradoCicloId"
+                value={formData.gradoCicloId}
+                onChange={handleChange}
+                disabled={loading || loadingGrados}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+              >
+                <option value="">Ninguno (inscribir después)</option>
+                {gradosDisponibles.map(grado => (
+                  <option key={grado.id} value={grado.id}>
+                    {grado.nombre} - {grado.jornada}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-sm text-gray-500">
+                Si seleccionas un grado, el estudiante se inscribirá automáticamente al ciclo activo
+              </p>
+              {loadingGrados && (
+                <p className="mt-1 text-sm text-blue-600">Cargando grados disponibles...</p>
+              )}
+              {!loadingGrados && gradosDisponibles.length === 0 && (
+                <p className="mt-1 text-sm text-orange-600">
+                  No hay grados disponibles para el plan seleccionado
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Jornada (solo para docentes) */}
           {formData.rol === 'docente' && (
             <div>
@@ -360,7 +443,6 @@ export default function UserModal({ isOpen, onClose, onSave, user, mode }) {
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 }

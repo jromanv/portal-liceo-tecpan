@@ -73,6 +73,61 @@ const getUsers = async (req, res) => {
       paramCount++;
     }
 
+    // Filtro por plan (para estudiantes)
+    if (req.query.plan) {
+      query += ` AND e.plan = $${paramCount}`;
+      params.push(req.query.plan);
+      paramCount++;
+    }
+
+    // Filtro por jornada (para docentes)
+    if (req.query.jornada) {
+      query += ` AND d.jornada = $${paramCount}`;
+      params.push(req.query.jornada);
+      paramCount++;
+    }
+
+    // Filtro por jornada (para docentes)
+    if (req.query.jornada) {
+      query += ` AND d.jornada = $${paramCount}`;
+      params.push(req.query.jornada);
+      paramCount++;
+    }
+
+    // Filtro por grado inscrito (para estudiantes)
+    if (req.query.gradoCicloId) {
+      query += ` AND e.id IN (
+        SELECT estudiante_id FROM inscripciones 
+        WHERE grado_ciclo_id = $${paramCount} AND estado = 'activo'
+      )`;
+      params.push(parseInt(req.query.gradoCicloId));
+      paramCount++;
+    }
+
+    // Filtro por estado de inscripción (para estudiantes)
+    if (req.query.inscrito) {
+      const cicloActivo = await pool.query('SELECT id FROM ciclos_escolares WHERE activo = true LIMIT 1');
+      if (cicloActivo.rows.length > 0) {
+        const cicloId = cicloActivo.rows[0].id;
+
+        if (req.query.inscrito === 'true') {
+          query += ` AND e.id IN (
+            SELECT estudiante_id FROM inscripciones 
+            WHERE ciclo_id = $${paramCount} AND estado = 'activo'
+          )`;
+          params.push(cicloId);
+          paramCount++;
+        } else if (req.query.inscrito === 'false') {
+          query += ` AND e.id NOT IN (
+            SELECT estudiante_id FROM inscripciones 
+            WHERE ciclo_id = $${paramCount} AND estado = 'activo'
+          )`;
+          params.push(cicloId);
+          paramCount++;
+        }
+      }
+    }
+
     // Contar total de registros
     const countQuery = `SELECT COUNT(*) FROM (${query}) as total`;
     const countResult = await pool.query(countQuery, params);
@@ -177,7 +232,7 @@ const createUser = async (req, res) => {
   const client = await pool.connect();
 
   try {
-    const { email, password, rol, nombre, apellido, codigo_personal, plan, jornada } = req.body;
+    const { email, password, rol, nombre, apellido, codigo_personal, plan, jornada, gradoCicloId } = req.body;
 
     // Validaciones
     if (!email || !password || !rol || !nombre || !apellido) {
@@ -270,13 +325,34 @@ const createUser = async (req, res) => {
     );
 
     const userId = userResult.rows[0].id;
+    let estudianteId = null;
 
     // Insertar en tabla específica según rol
     if (rol === 'estudiante') {
-      await client.query(
-        'INSERT INTO estudiantes (usuario_id, codigo_personal, nombre, apellido, plan) VALUES ($1, $2, $3, $4, $5)',
+      const estudianteResult = await client.query(
+        'INSERT INTO estudiantes (usuario_id, codigo_personal, nombre, apellido, plan) VALUES ($1, $2, $3, $4, $5) RETURNING id',
         [userId, codigo_personal, nombre, apellido, plan]
       );
+      estudianteId = estudianteResult.rows[0].id;
+
+      // ⭐ Si tiene gradoCicloId, inscribirlo automáticamente
+      if (gradoCicloId) {
+        // Obtener ciclo activo
+        const cicloResult = await client.query(
+          'SELECT id FROM ciclos_escolares WHERE activo = true LIMIT 1'
+        );
+
+        if (cicloResult.rows.length > 0) {
+          const cicloId = cicloResult.rows[0].id;
+
+          // Inscribir al estudiante
+          await client.query(
+            `INSERT INTO inscripciones (estudiante_id, grado_ciclo_id, ciclo_id, fecha_inscripcion, estado)
+             VALUES ($1, $2, $3, CURRENT_DATE, 'activo')`,
+            [estudianteId, gradoCicloId, cicloId]
+          );
+        }
+      }
     } else if (rol === 'docente') {
       await client.query(
         'INSERT INTO docentes (usuario_id, codigo_personal, nombre, apellido, jornada) VALUES ($1, $2, $3, $4, $5)',
@@ -577,6 +653,7 @@ const activateUser = async (req, res) => {
 };
 
 // Obtener estadísticas
+// Obtener estadísticas
 const getStats = async (req, res) => {
   try {
     const stats = await pool.query(`
@@ -597,11 +674,35 @@ const getStats = async (req, res) => {
       FROM estudiantes
     `);
 
+    const docentesStats = await pool.query(`
+      SELECT 
+        COUNT(*) FILTER (WHERE jornada = 'diario') as jornada_diario,
+        COUNT(*) FILTER (WHERE jornada = 'fin_de_semana') as jornada_fin_semana,
+        COUNT(*) FILTER (WHERE jornada = 'ambas') as jornada_ambas
+      FROM docentes
+    `);
+
+    // Estadísticas de inscripciones (ciclo activo)
+    const inscripcionesStats = await pool.query(`
+      SELECT 
+        COUNT(DISTINCT i.estudiante_id) as estudiantes_inscritos
+      FROM inscripciones i
+      JOIN ciclos_escolares c ON i.ciclo_id = c.id
+      WHERE c.activo = true AND i.estado = 'activo'
+    `);
+
+    const estudiantesInscritos = inscripcionesStats.rows[0].estudiantes_inscritos || 0;
+    const totalEstudiantes = parseInt(stats.rows[0].total_estudiantes) || 0;
+    const estudiantesNoInscritos = totalEstudiantes - estudiantesInscritos;
+
     res.json({
       success: true,
       data: {
         ...stats.rows[0],
         ...estudiantesStats.rows[0],
+        ...docentesStats.rows[0],
+        estudiantes_inscritos: estudiantesInscritos,
+        estudiantes_no_inscritos: estudiantesNoInscritos,
       },
     });
   } catch (error) {

@@ -239,6 +239,12 @@ const bulkCreateUsers = async (req, res) => {
 
     await client.query('BEGIN');
 
+    // Obtener ciclo activo UNA VEZ
+    const cicloResult = await client.query(
+      'SELECT id FROM ciclos_escolares WHERE activo = true LIMIT 1'
+    );
+    const cicloActivo = cicloResult.rows.length > 0 ? cicloResult.rows[0].id : null;
+
     const results = {
       success: [],
       errors: [],
@@ -258,13 +264,39 @@ const bulkCreateUsers = async (req, res) => {
         );
 
         const userId = userResult.rows[0].id;
+        let estudianteId = null;
 
         // Insertar en tabla específica según rol
         if (userData.rol === 'estudiante') {
-          await client.query(
-            'INSERT INTO estudiantes (usuario_id, codigo_personal, nombre, apellido, plan) VALUES ($1, $2, $3, $4, $5)',
+          const estudianteResult = await client.query(
+            'INSERT INTO estudiantes (usuario_id, codigo_personal, nombre, apellido, plan) VALUES ($1, $2, $3, $4, $5) RETURNING id',
             [userId, userData.codigo_personal, userData.nombre, userData.apellido, userData.plan]
           );
+          estudianteId = estudianteResult.rows[0].id;
+
+          // ⭐ Si tiene grado, inscribirlo automáticamente
+          if (userData.grado && userData.grado.trim() !== '' && cicloActivo) {
+            // Buscar gradoCicloId por nombre de grado
+            const gradoResult = await client.query(
+              `SELECT gc.id 
+               FROM grados_ciclo gc
+               JOIN grados g ON gc.grado_id = g.id
+               WHERE g.nombre = $1 AND gc.ciclo_id = $2 AND gc.activo = true`,
+              [userData.grado.trim(), cicloActivo]
+            );
+
+            if (gradoResult.rows.length > 0) {
+              const gradoCicloId = gradoResult.rows[0].id;
+
+              // Inscribir al estudiante
+              await client.query(
+                `INSERT INTO inscripciones (estudiante_id, grado_ciclo_id, ciclo_id, fecha_inscripcion, estado)
+                 VALUES ($1, $2, $3, CURRENT_DATE, 'activo')`,
+                [estudianteId, gradoCicloId, cicloActivo]
+              );
+            }
+            // Si el grado no existe, simplemente no inscribe pero no marca error
+          }
         } else if (userData.rol === 'docente') {
           await client.query(
             'INSERT INTO docentes (usuario_id, codigo_personal, nombre, apellido, jornada) VALUES ($1, $2, $3, $4, $5)',

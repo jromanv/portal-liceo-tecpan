@@ -22,6 +22,7 @@ export default function DirectorDashboard() {
     { href: '/dashboard/director', iconType: 'home', label: 'Inicio' },
     { href: '/dashboard/director/usuarios', iconType: 'users', label: 'Usuarios' },
     { href: '/dashboard/director/calendario', iconType: 'calendar', label: 'Calendario' },
+    { href: '/dashboard/director/academico', iconType: 'book', label: 'Gestión Académica' },
   ];
 
   useEffect(() => {

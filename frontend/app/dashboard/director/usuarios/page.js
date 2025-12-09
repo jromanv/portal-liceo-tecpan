@@ -26,6 +26,8 @@ export default function UsuariosPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
+  const [vistaActual, setVistaActual] = useState('todos'); // todos, directores, docentes, estudiantes_diario, estudiantes_fin_semana
+
   const [filters, setFilters] = useState({
     search: '',
     rol: '',
@@ -47,16 +49,32 @@ export default function UsuariosPage() {
     { href: '/dashboard/director', iconType: 'home', label: 'Inicio' },
     { href: '/dashboard/director/usuarios', iconType: 'users', label: 'Usuarios' },
     { href: '/dashboard/director/calendario', iconType: 'calendar', label: 'Calendario' },
+    { href: '/dashboard/director/academico', iconType: 'book', label: 'Gestión Académica' },
   ];
 
-  // Cargar usuarios
+  // Cargar usuarios según la vista actual
   const loadUsers = async () => {
     setLoading(true);
     try {
+      let filtrosVista = { ...filters };
+
+      // Aplicar filtros según la pestaña activa
+      if (vistaActual === 'directores') {
+        filtrosVista.rol = 'director';
+      } else if (vistaActual === 'docentes') {
+        filtrosVista.rol = 'docente';
+      } else if (vistaActual === 'estudiantes_diario') {
+        filtrosVista.rol = 'estudiante';
+        filtrosVista.plan = 'diario';
+      } else if (vistaActual === 'estudiantes_fin_semana') {
+        filtrosVista.rol = 'estudiante';
+        filtrosVista.plan = 'fin_de_semana';
+      }
+
       const response = await getUsers({
         page: pagination.page,
         limit: pagination.limit,
-        ...filters,
+        ...filtrosVista,
       });
 
       setUsers(response.data.users);
@@ -87,7 +105,7 @@ export default function UsuariosPage() {
   useEffect(() => {
     loadUsers();
     loadStats();
-  }, [pagination.page]);
+  }, [pagination.page, vistaActual]);
 
   // Cambiar filtros
   const handleFilterChange = (name, value) => {
@@ -106,6 +124,21 @@ export default function UsuariosPage() {
   // Cambiar página
   const handlePageChange = (newPage) => {
     setPagination((prev) => ({ ...prev, page: newPage }));
+  };
+
+  // Cambiar vista
+  const handleVistaChange = (vista) => {
+    setVistaActual(vista);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+    // Limpiar TODOS los filtros al cambiar de pestaña
+    setFilters({
+      search: '',
+      rol: '',
+      activo: '',
+      jornada: '',
+      gradoCicloId: '',
+      inscrito: '',
+    });
   };
 
   // Abrir modal para crear
@@ -129,7 +162,6 @@ export default function UsuariosPage() {
         await createUser(userData);
         alert('Usuario creado exitosamente');
       } else {
-        // En modo edición, enviamos los campos que pueden cambiar
         const updateData = {
           email: userData.email,
           nombre: userData.nombre,
@@ -137,21 +169,17 @@ export default function UsuariosPage() {
           activo: userData.activo,
         };
 
-        // Agregar campos específicos según el rol
         if (selectedUser.rol === 'estudiante') {
           updateData.codigo_personal = userData.codigo_personal;
           updateData.plan = userData.plan;
         } else if (selectedUser.rol === 'docente') {
           updateData.codigo_personal = userData.codigo_personal;
-          updateData.jornada = userData.jornada; // ← ESTO ES CRÍTICO
+          updateData.jornada = userData.jornada;
         }
 
-        // Si hay contraseña nueva, agregarla
         if (userData.password) {
           updateData.password = userData.password;
         }
-
-        console.log('📤 Enviando actualización:', updateData);
 
         await updateUser(selectedUser.id, updateData);
         alert('Usuario actualizado exitosamente');
@@ -207,21 +235,83 @@ export default function UsuariosPage() {
 
         {/* Estadísticas */}
         {stats && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6">
-            <StatCard title="Total Usuarios" value={stats.total_usuarios} color="bg-blue-500" />
-            <StatCard
-              title="Estudiantes"
-              value={stats.total_estudiantes}
-              color="bg-green-500"
-            />
-            <StatCard title="Docentes" value={stats.total_docentes} color="bg-purple-500" />
-            <StatCard
-              title="Usuarios Activos"
-              value={stats.usuarios_activos}
-              color="bg-yellow-500"
-            />
+          <div className="mb-6">
+            {vistaActual === 'todos' && (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                <StatCard title="Total Usuarios" value={stats.total_usuarios} color="bg-blue-500" />
+                <StatCard title="Estudiantes" value={stats.total_estudiantes} color="bg-green-500" />
+                <StatCard title="Docentes" value={stats.total_docentes} color="bg-purple-500" />
+                <StatCard title="Directores" value={stats.total_directores} color="bg-yellow-500" />
+              </div>
+            )}
+
+            {vistaActual === 'directores' && (
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
+                <StatCard title="Total Directores" value={stats.total_directores} color="bg-yellow-500" />
+                <StatCard title="Activos" value={stats.usuarios_activos} color="bg-green-500" />
+                <StatCard title="Inactivos" value={stats.usuarios_inactivos} color="bg-red-500" />
+              </div>
+            )}
+
+            {vistaActual === 'docentes' && (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                <StatCard title="Total Docentes" value={stats.total_docentes} color="bg-purple-500" />
+                <StatCard title="Jornada Diario" value={stats.jornada_diario || 0} color="bg-blue-500" />
+                <StatCard title="Fin de Semana" value={stats.jornada_fin_semana || 0} color="bg-green-500" />
+                <StatCard title="Ambas" value={stats.jornada_ambas || 0} color="bg-yellow-500" />
+              </div>
+            )}
+
+            {vistaActual === 'estudiantes_diario' && (
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
+                <StatCard title="Total Diario" value={stats.plan_diario || 0} color="bg-blue-500" />
+                <StatCard title="Inscritos" value={stats.estudiantes_inscritos || 0} color="bg-green-500" />
+                <StatCard title="No Inscritos" value={stats.estudiantes_no_inscritos || 0} color="bg-orange-500" />
+              </div>
+            )}
+
+            {vistaActual === 'estudiantes_fin_semana' && (
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
+                <StatCard title="Total Fin de Semana" value={stats.plan_fin_semana || 0} color="bg-green-500" />
+                <StatCard title="Inscritos" value={stats.estudiantes_inscritos || 0} color="bg-blue-500" />
+                <StatCard title="No Inscritos" value={stats.estudiantes_no_inscritos || 0} color="bg-orange-500" />
+              </div>
+            )}
           </div>
         )}
+
+        {/* Pestañas de navegación */}
+        <div className="bg-white rounded-lg shadow-md mb-6">
+          <div className="border-b border-gray-200">
+            <nav className="flex flex-wrap px-4 sm:px-6" aria-label="Tabs">
+              <TabButton
+                active={vistaActual === 'todos'}
+                onClick={() => handleVistaChange('todos')}
+                label="Todos"
+              />
+              <TabButton
+                active={vistaActual === 'directores'}
+                onClick={() => handleVistaChange('directores')}
+                label="Directores"
+              />
+              <TabButton
+                active={vistaActual === 'docentes'}
+                onClick={() => handleVistaChange('docentes')}
+                label="Docentes"
+              />
+              <TabButton
+                active={vistaActual === 'estudiantes_diario'}
+                onClick={() => handleVistaChange('estudiantes_diario')}
+                label="Estudiantes Diario"
+              />
+              <TabButton
+                active={vistaActual === 'estudiantes_fin_semana'}
+                onClick={() => handleVistaChange('estudiantes_fin_semana')}
+                label="Estudiantes Fin de Semana"
+              />
+            </nav>
+          </div>
+        </div>
 
         {/* Botones Crear Usuario y Carga Masiva */}
         <div className="mb-6 flex flex-col sm:flex-row gap-3">
@@ -229,18 +319,8 @@ export default function UsuariosPage() {
             onClick={handleCreate}
             className="bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-6 rounded-lg transition-colors inline-flex items-center justify-center"
           >
-            <svg
-              className="w-5 h-5 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             Crear Usuario
           </button>
@@ -249,12 +329,7 @@ export default function UsuariosPage() {
             onClick={() => setBulkModalOpen(true)}
             className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors inline-flex items-center justify-center"
           >
-            <svg
-              className="w-5 h-5 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -267,7 +342,12 @@ export default function UsuariosPage() {
         </div>
 
         {/* Filtros */}
-        <UserFilters filters={filters} onFilterChange={handleFilterChange} onSearch={handleSearch} />
+        <UserFilters
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onSearch={handleSearch}
+          vistaActual={vistaActual}
+        />
 
         {/* Tabla */}
         <UserTable
@@ -302,9 +382,23 @@ export default function UsuariosPage() {
             loadStats();
           }}
         />
-
       </DashboardLayout>
     </ProtectedRoute>
+  );
+}
+
+// Componente de botón de pestaña
+function TabButton({ active, onClick, label }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`py-3 sm:py-4 px-3 sm:px-4 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${active
+        ? 'border-primary text-primary'
+        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+        }`}
+    >
+      {label}
+    </button>
   );
 }
 
