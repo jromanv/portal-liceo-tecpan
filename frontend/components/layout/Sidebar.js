@@ -2,12 +2,25 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Sidebar({ menuItems, isOpen, onClose, isCollapsed, onToggleCollapse }) {
   const pathname = usePathname();
   const [hoveredItem, setHoveredItem] = useState(null);
   const [openSubmenu, setOpenSubmenu] = useState(null);
+
+  // Auto-abrir submenú si la ruta actual pertenece a él
+  useEffect(() => {
+    menuItems.forEach((item, index) => {
+      if (item.submenu) {
+        const isSubmenuActive = item.submenu.some(subitem => pathname.startsWith(subitem.href));
+        if (isSubmenuActive && openSubmenu !== index) {
+          setOpenSubmenu(index);
+        }
+      }
+    });
+  }, [pathname, menuItems]);
+
   const toggleSubmenu = (index) => {
     setOpenSubmenu(openSubmenu === index ? null : index);
   };
@@ -84,8 +97,8 @@ export default function Sidebar({ menuItems, isOpen, onClose, isCollapsed, onTog
                     <button
                       onClick={() => toggleSubmenu(index)}
                       className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 ${isSubmenuOpen
-                          ? 'bg-primary-light text-white'
-                          : 'text-white hover:bg-primary-light'
+                        ? 'bg-primary-light text-white'
+                        : 'text-white hover:bg-primary-light'
                         } ${isCollapsed ? 'justify-center' : ''}`}
                     >
                       <div className="flex items-center">
@@ -120,8 +133,8 @@ export default function Sidebar({ menuItems, isOpen, onClose, isCollapsed, onTog
                         }
                       }}
                       className={`flex items-center px-4 py-3 rounded-lg transition-all duration-200 ${isActive
-                          ? 'bg-white text-primary shadow-md'
-                          : 'text-white hover:bg-primary-light'
+                        ? 'bg-white text-primary shadow-md'
+                        : 'text-white hover:bg-primary-light'
                         } ${isCollapsed ? 'justify-center' : ''}`}
                     >
                       <IconComponent type={item.iconType} />
@@ -146,11 +159,16 @@ export default function Sidebar({ menuItems, isOpen, onClose, isCollapsed, onTog
                                 }
                               }}
                               className={`flex items-center justify-between px-4 py-2 rounded-lg text-sm transition-all duration-200 ${isSubActive
-                                  ? 'bg-white text-primary shadow-sm'
-                                  : 'text-gray-200 hover:bg-primary-light hover:text-white'
+                                ? 'bg-white text-primary shadow-sm'
+                                : 'text-gray-200 hover:bg-primary-light hover:text-white'
                                 }`}
                             >
-                              <span className="truncate">{subitem.label}</span>
+                              <div className="flex items-center gap-2.5">
+                                <svg className="w-3 h-3 fill-current opacity-70" viewBox="0 0 16 16">
+                                  <path d="M6 4l4 4-4 4V4z" />
+                                </svg>
+                                <span className="truncate">{subitem.label}</span>
+                              </div>
                               {subitem.badge && (
                                 <span className="ml-2 px-2 py-0.5 bg-white/20 rounded text-xs">
                                   {subitem.badge}

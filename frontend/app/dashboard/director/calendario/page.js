@@ -30,11 +30,22 @@ export default function DirectorCalendarioPage() {
     const [viewMode, setViewMode] = useState('grid'); // 'grid' o 'list'
 
     const menuItems = [
-        { href: '/dashboard/director', iconType: 'home', label: 'Inicio' },
-        { href: '/dashboard/director/usuarios', iconType: 'users', label: 'Usuarios' },
-        { href: '/dashboard/director/calendario', iconType: 'calendar', label: 'Calendario' },
-        { href: '/dashboard/director/academico', iconType: 'book', label: 'Gestión Académica' },
-    ];
+    { href: '/dashboard/director', iconType: 'home', label: 'Inicio' },
+    { href: '/dashboard/director/usuarios', iconType: 'users', label: 'Usuarios' },
+    { href: '/dashboard/director/calendario', iconType: 'calendar', label: 'Calendario' },
+    {
+      iconType: 'book',
+      label: 'Gestión Académica',
+      submenu: [
+        { href: '/dashboard/director/academico/ciclos', label: 'Ciclos Escolares' },
+        { href: '/dashboard/director/academico/grados', label: 'Grados' },
+        { href: '/dashboard/director/academico/cursos', label: 'Cursos' },
+        { href: '/dashboard/director/academico/horarios', label: 'Horarios' },
+        { href: '/dashboard/director/academico/inscripciones', label: 'Inscripciones' },
+        { href: '/dashboard/director/academico/asignaciones', label: 'Asignaciones' },
+      ],
+    },
+  ];
 
     useEffect(() => {
         loadCategories();

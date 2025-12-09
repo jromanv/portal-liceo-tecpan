@@ -10,6 +10,7 @@ const cursosController = require('../controllers/cursosController');
 const horariosController = require('../controllers/horariosController');
 const inscripcionesController = require('../controllers/inscripcionesController');
 const docenteCursosController = require('../controllers/docenteCursosController');
+const estudianteController = require('../controllers/estudianteController');
 
 // ==================== CICLOS ESCOLARES ====================
 router.get('/ciclos', authMiddleware, ciclosController.getCiclos);
@@ -63,5 +64,8 @@ router.get('/docente-cursos/curso/:cursoGradoCicloId', authMiddleware, docenteCu
 router.get('/docente-cursos/disponibles/:cursoGradoCicloId', authMiddleware, directorMiddleware, docenteCursosController.getDocentesDisponibles);
 router.post('/docente-cursos', authMiddleware, directorMiddleware, docenteCursosController.asignarDocenteCurso);
 router.delete('/docente-cursos/:id', authMiddleware, directorMiddleware, docenteCursosController.quitarDocenteCurso);
+
+// ==================== ESTUDIANTE ====================
+router.get('/estudiante/mi-info', authMiddleware, estudianteController.getMiInfo);
 
 module.exports = router;

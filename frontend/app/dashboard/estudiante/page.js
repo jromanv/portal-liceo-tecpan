@@ -6,20 +6,17 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
 import { getMyAnnouncements } from '@/lib/api/announcements';
 import AnnouncementList from '@/components/announcements/AnnouncementList';
+import axios from '@/lib/axios';
 
 export default function EstudianteDashboard() {
   const { user } = useAuth();
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const menuItems = [
-    { href: '/dashboard/estudiante', iconType: 'home', label: 'Inicio' },
-    { href: '/dashboard/estudiante/calendario', iconType: 'calendar', label: 'Calendario' },
-    { href: '/dashboard/estudiante/perfil', iconType: 'user', label: 'Mi Perfil' },
-  ];
+  const [grado, setGrado] = useState(null);
 
   useEffect(() => {
     loadAnnouncements();
+    loadGradoInfo();
   }, []);
 
   const loadAnnouncements = async () => {
@@ -33,6 +30,29 @@ export default function EstudianteDashboard() {
       setLoading(false);
     }
   };
+
+  const loadGradoInfo = async () => {
+    try {
+      const response = await axios.get('/academico/estudiante/mi-info');
+      setGrado(response.data.data.grado);
+    } catch (error) {
+      console.error('Error al cargar información del grado:', error);
+    }
+  };
+
+  const menuItems = [
+    { href: '/dashboard/estudiante', iconType: 'home', label: 'Inicio' },
+    { href: '/dashboard/estudiante/calendario', iconType: 'calendar', label: 'Calendario' },
+    {
+      iconType: 'book',
+      label: grado ? `Mi Grado: ${grado.nombre}` : 'Mi Información Académica',
+      submenu: [
+        { href: '/dashboard/estudiante/cursos', label: 'Mis Cursos' },
+        { href: '/dashboard/estudiante/horarios', label: 'Mi Horario' },
+      ],
+    },
+    { href: '/dashboard/estudiante/perfil', iconType: 'user', label: 'Mi Perfil' },
+  ];
 
   function getPlanLabel(plan) {
     return plan === 'diario' ? 'Plan Diario' : 'Plan Fin de Semana';

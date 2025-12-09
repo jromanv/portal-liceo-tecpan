@@ -9,6 +9,7 @@ import UpcomingActivities from '@/components/calendar/UpcomingActivities';
 import { useAuth } from '@/context/AuthContext';
 import { getActivities } from '@/lib/api/calendar';
 import { MESES } from '@/lib/utils/dateUtils';
+import axios from '@/lib/axios';
 
 export default function EstudianteCalendarioPage() {
     const { user } = useAuth();
@@ -18,6 +19,7 @@ export default function EstudianteCalendarioPage() {
     const [selectedActivity, setSelectedActivity] = useState(null);
     const [detailModalOpen, setDetailModalOpen] = useState(false);
     const [viewMode, setViewMode] = useState('grid');
+    const [grado, setGrado] = useState(null);
 
     // El estudiante solo ve el calendario de su plan
     const userPlan = user?.plan || 'diario';
@@ -25,12 +27,30 @@ export default function EstudianteCalendarioPage() {
     const menuItems = [
         { href: '/dashboard/estudiante', iconType: 'home', label: 'Inicio' },
         { href: '/dashboard/estudiante/calendario', iconType: 'calendar', label: 'Calendario' },
+        {
+            iconType: 'book',
+            label: grado ? `Mi Grado: ${grado.nombre}` : 'Mi Información Académica',
+            submenu: [
+                { href: '/dashboard/estudiante/cursos', label: 'Mis Cursos' },
+                { href: '/dashboard/estudiante/horarios', label: 'Mi Horario' },
+            ],
+        },
         { href: '/dashboard/estudiante/perfil', iconType: 'user', label: 'Mi Perfil' },
     ];
 
     useEffect(() => {
         loadActivities();
+        loadGradoInfo();
     }, [currentDate, userPlan]);
+
+    const loadGradoInfo = async () => {
+        try {
+            const response = await axios.get('/academico/estudiante/mi-info');
+            setGrado(response.data.data.grado);
+        } catch (error) {
+            console.error('Error al cargar información del grado:', error);
+        }
+    };
 
     const loadActivities = async () => {
         try {

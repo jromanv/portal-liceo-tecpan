@@ -1,0 +1,70 @@
+const fs = require('fs');
+
+const menuItemsCode = `const menuItems = [
+    { href: '/dashboard/director', iconType: 'home', label: 'Inicio' },
+    { href: '/dashboard/director/usuarios', iconType: 'users', label: 'Usuarios' },
+    { href: '/dashboard/director/calendario', iconType: 'calendar', label: 'Calendario' },
+    {
+      iconType: 'book',
+      label: 'Gestión Académica',
+      submenu: [
+        { href: '/dashboard/director/academico/ciclos', label: 'Ciclos Escolares' },
+        { href: '/dashboard/director/academico/grados', label: 'Grados' },
+        { href: '/dashboard/director/academico/cursos', label: 'Cursos' },
+        { href: '/dashboard/director/academico/horarios', label: 'Horarios' },
+        { href: '/dashboard/director/academico/inscripciones', label: 'Inscripciones' },
+        { href: '/dashboard/director/academico/asignaciones', label: 'Asignaciones' },
+      ],
+    },
+  ];`;
+
+const files = [
+    'd:/Sistemas JR/PortalLT/liceo-tecpan/frontend/app/dashboard/director/page.js',
+    'd:/Sistemas JR/PortalLT/liceo-tecpan/frontend/app/dashboard/director/usuarios/page.js',
+    'd:/Sistemas JR/PortalLT/liceo-tecpan/frontend/app/dashboard/director/calendario/page.js'
+];
+
+files.forEach(file => {
+    try {
+        let content = fs.readFileSync(file, 'utf8');
+
+        // Buscar el inicio y fin del menuItems actual
+        const startPattern = /const menuItems = \[/;
+        const startMatch = content.match(startPattern);
+
+        if (!startMatch) {
+            console.log(`❌ No se encontró menuItems en ${file}`);
+            return;
+        }
+
+        const startIndex = startMatch.index;
+        let bracketCount = 0;
+        let endIndex = startIndex;
+        let foundStart = false;
+
+        for (let i = startIndex; i < content.length; i++) {
+            if (content[i] === '[') {
+                bracketCount++;
+                foundStart = true;
+            } else if (content[i] === ']') {
+                bracketCount--;
+                if (foundStart && bracketCount === 0) {
+                    endIndex = i + 2; // +2 para incluir ]; 
+                    break;
+                }
+            }
+        }
+
+        // Reemplazar el menuItems
+        const before = content.substring(0, startIndex);
+        const after = content.substring(endIndex);
+        const newContent = before + menuItemsCode + after;
+
+        fs.writeFileSync(file, newContent, 'utf8');
+        console.log(`✓ Actualizado: ${file.split('/').pop()}`);
+    } catch (error) {
+        console.log(`❌ Error en ${file}:`, error.message);
+    }
+});
+
+console.log('\n✅ MenuItems actualizados');
