@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { getMyAnnouncements } from '@/lib/api/announcements';
 import AnnouncementList from '@/components/announcements/AnnouncementList';
 import FlipBook from '@/components/flipbook/FlipBook';
+import axios from '@/lib/axios';
 
 export default function DocenteDashboard() {
   const { user } = useAuth();
@@ -21,8 +22,10 @@ export default function DocenteDashboard() {
   ];
 
   useEffect(() => {
-    loadAnnouncements();
-  }, []);
+    if (user) {
+      loadAnnouncements();
+    }
+  }, [user]);
 
   const loadAnnouncements = async () => {
     try {
@@ -176,7 +179,7 @@ export default function DocenteDashboard() {
         {/* Mensaje informativo */}
         <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded mt-6">
           <p className="text-sm text-blue-700">
-            <strong>Nota:</strong> Funcionalidades como gestión de cursos, calificaciones y asistencia estarán disponibles próximamente.
+            <strong>Nota:</strong> Funcionalidades como gestión de calificaciones y asistencia estarán disponibles próximamente.
           </p>
         </div>
       </DashboardLayout>
@@ -195,7 +198,6 @@ function InfoItem({ label, value }) {
 
 function QuickAccessCard({ href, icon, title, description }) {
   return (
-
     <a href={href}
       className="block p-4 border border-gray-200 rounded-lg hover:shadow-md hover:border-primary transition-all"
     >
@@ -217,6 +219,6 @@ function QuickAccessCard({ href, icon, title, description }) {
           <p className="text-sm text-gray-600 mt-1">{description}</p>
         </div>
       </div>
-    </a >
+    </a>
   );
 }

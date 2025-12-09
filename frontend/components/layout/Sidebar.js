@@ -7,6 +7,10 @@ import { useState } from 'react';
 export default function Sidebar({ menuItems, isOpen, onClose, isCollapsed, onToggleCollapse }) {
   const pathname = usePathname();
   const [hoveredItem, setHoveredItem] = useState(null);
+  const [openSubmenu, setOpenSubmenu] = useState(null);
+  const toggleSubmenu = (index) => {
+    setOpenSubmenu(openSubmenu === index ? null : index);
+  };
 
   return (
     <>
@@ -64,7 +68,10 @@ export default function Sidebar({ menuItems, isOpen, onClose, isCollapsed, onTog
         <nav className="mt-4 px-3">
           <ul className="space-y-1">
             {menuItems.map((item, index) => {
-              const isActive = pathname === item.href;
+              const isActive = item.href ? pathname === item.href : false;
+              const hasSubmenu = item.submenu && item.submenu.length > 0;
+              const isSubmenuOpen = openSubmenu === index;
+
               return (
                 <li
                   key={index}
@@ -72,31 +79,104 @@ export default function Sidebar({ menuItems, isOpen, onClose, isCollapsed, onTog
                   onMouseLeave={() => setHoveredItem(null)}
                   className="relative"
                 >
-                  <Link
-                    href={item.href}
-                    onClick={(e) => {
-                      // Solo cerrar el sidebar en móvil (cuando isOpen es true)
-                      // En desktop, no hacer nada para mantener el estado collapsed
-                      if (isOpen) {
-                        onClose();
-                      }
-                    }}
-                    className={`flex items-center px-4 py-3 rounded-lg transition-all duration-200 ${isActive
-                      ? 'bg-white text-primary shadow-md'
-                      : 'text-white hover:bg-primary-light'
-                      } ${isCollapsed ? 'justify-center' : ''}`}
-                  >
-                    <IconComponent type={item.iconType} />
-                    {!isCollapsed && (
-                      <span className="font-medium ml-3">{item.label}</span>
-                    )}
-                  </Link>
+                  {/* Item principal */}
+                  {hasSubmenu ? (
+                    <button
+                      onClick={() => toggleSubmenu(index)}
+                      className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 ${isSubmenuOpen
+                          ? 'bg-primary-light text-white'
+                          : 'text-white hover:bg-primary-light'
+                        } ${isCollapsed ? 'justify-center' : ''}`}
+                    >
+                      <div className="flex items-center">
+                        <IconComponent type={item.iconType} />
+                        {!isCollapsed && (
+                          <span className="font-medium ml-3">{item.label}</span>
+                        )}
+                      </div>
+                      {!isCollapsed && (
+                        <svg
+                          className={`w-4 h-4 transition-transform duration-200 ${isSubmenuOpen ? 'rotate-180' : ''
+                            }`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                  ) : (
+                    <Link
+                      href={item.href}
+                      onClick={(e) => {
+                        if (isOpen) {
+                          onClose();
+                        }
+                      }}
+                      className={`flex items-center px-4 py-3 rounded-lg transition-all duration-200 ${isActive
+                          ? 'bg-white text-primary shadow-md'
+                          : 'text-white hover:bg-primary-light'
+                        } ${isCollapsed ? 'justify-center' : ''}`}
+                    >
+                      <IconComponent type={item.iconType} />
+                      {!isCollapsed && (
+                        <span className="font-medium ml-3">{item.label}</span>
+                      )}
+                    </Link>
+                  )}
+
+                  {/* Submenu */}
+                  {hasSubmenu && isSubmenuOpen && !isCollapsed && (
+                    <ul className="mt-1 ml-4 space-y-1">
+                      {item.submenu.map((subitem, subIndex) => {
+                        const isSubActive = pathname === subitem.href;
+                        return (
+                          <li key={subIndex}>
+                            <Link
+                              href={subitem.href}
+                              onClick={(e) => {
+                                if (isOpen) {
+                                  onClose();
+                                }
+                              }}
+                              className={`flex items-center justify-between px-4 py-2 rounded-lg text-sm transition-all duration-200 ${isSubActive
+                                  ? 'bg-white text-primary shadow-sm'
+                                  : 'text-gray-200 hover:bg-primary-light hover:text-white'
+                                }`}
+                            >
+                              <span className="truncate">{subitem.label}</span>
+                              {subitem.badge && (
+                                <span className="ml-2 px-2 py-0.5 bg-white/20 rounded text-xs">
+                                  {subitem.badge}
+                                </span>
+                              )}
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
 
                   {/* Tooltip para cuando está colapsado */}
                   {isCollapsed && hoveredItem === index && (
                     <div className="hidden lg:block absolute left-full ml-2 top-1/2 -translate-y-1/2 z-50">
                       <div className="bg-gray-900 text-white text-sm px-3 py-2 rounded-md shadow-lg whitespace-nowrap">
                         {item.label}
+                        {hasSubmenu && (
+                          <div className="mt-1 pt-1 border-t border-gray-700">
+                            {item.submenu.map((sub, idx) => (
+                              <div key={idx} className="text-xs text-gray-300 py-0.5">
+                                • {sub.label}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                         <div className="absolute right-full top-1/2 -translate-y-1/2 border-8 border-transparent border-r-gray-900"></div>
                       </div>
                     </div>
