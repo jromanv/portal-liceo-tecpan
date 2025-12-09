@@ -106,13 +106,27 @@ function TabButton({ active, onClick, label }) {
 function GestionCiclos() {
     const [ciclos, setCiclos] = useState([]);
     const [loading, setLoading] = useState(true);
-    // const [showModal, setShowModal] = useState(false);
     const [showModalCiclo, setShowModalCiclo] = useState(false);
     const [formData, setFormData] = useState({
         anio: new Date().getFullYear() + 1,
         fecha_inicio: '',
         fecha_fin: '',
         activo: false
+    });
+
+    // Estados para modales de confirmación y notificación
+    const [modalConfirm, setModalConfirm] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: null
+    });
+
+    const [modalNotification, setModalNotification] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        variant: 'success'
     });
 
     useEffect(() => {
@@ -134,8 +148,13 @@ function GestionCiclos() {
         e.preventDefault();
         try {
             await axios.post('/academico/ciclos', formData);
-            alert('Ciclo escolar creado exitosamente');
-            setShowModal(false);
+            setModalNotification({
+                isOpen: true,
+                title: '¡Éxito!',
+                message: 'Ciclo escolar creado exitosamente',
+                variant: 'success'
+            });
+            setShowModalCiclo(false);
             cargarCiclos();
             setFormData({
                 anio: new Date().getFullYear() + 1,
@@ -144,30 +163,67 @@ function GestionCiclos() {
                 activo: false
             });
         } catch (error) {
-            alert(error.response?.data?.message || 'Error al crear ciclo');
+            setModalNotification({
+                isOpen: true,
+                title: 'Error',
+                message: error.response?.data?.message || 'Error al crear ciclo',
+                variant: 'error'
+            });
         }
     };
 
     const activarCiclo = async (id) => {
-        if (!confirm('¿Activar este ciclo escolar? Los demás se desactivarán.')) return;
-        try {
-            await axios.put(`/academico/ciclos/${id}/activar`);
-            alert('Ciclo activado exitosamente');
-            cargarCiclos();
-        } catch (error) {
-            alert('Error al activar ciclo');
-        }
+        setModalConfirm({
+            isOpen: true,
+            title: '¿Activar Ciclo Escolar?',
+            message: 'Al activar este ciclo escolar, todos los demás ciclos se desactivarán automáticamente.',
+            onConfirm: async () => {
+                try {
+                    await axios.put(`/academico/ciclos/${id}/activar`);
+                    setModalNotification({
+                        isOpen: true,
+                        title: '¡Éxito!',
+                        message: 'Ciclo activado exitosamente',
+                        variant: 'success'
+                    });
+                    cargarCiclos();
+                } catch (error) {
+                    setModalNotification({
+                        isOpen: true,
+                        title: 'Error',
+                        message: 'Error al activar ciclo',
+                        variant: 'error'
+                    });
+                }
+            }
+        });
     };
 
     const eliminarCiclo = async (id) => {
-        if (!confirm('¿Eliminar este ciclo escolar? Esta acción no se puede deshacer.')) return;
-        try {
-            await axios.delete(`/academico/ciclos/${id}`);
-            alert('Ciclo eliminado');
-            cargarCiclos();
-        } catch (error) {
-            alert('Error al eliminar ciclo');
-        }
+        setModalConfirm({
+            isOpen: true,
+            title: '¿Eliminar Ciclo Escolar?',
+            message: 'Esta acción no se puede deshacer. ¿Estás seguro de que deseas eliminar este ciclo escolar?',
+            onConfirm: async () => {
+                try {
+                    await axios.delete(`/academico/ciclos/${id}`);
+                    setModalNotification({
+                        isOpen: true,
+                        title: '¡Éxito!',
+                        message: 'Ciclo eliminado exitosamente',
+                        variant: 'success'
+                    });
+                    cargarCiclos();
+                } catch (error) {
+                    setModalNotification({
+                        isOpen: true,
+                        title: 'Error',
+                        message: 'Error al eliminar ciclo',
+                        variant: 'error'
+                    });
+                }
+            }
+        });
     };
 
     if (loading) {
@@ -185,7 +241,6 @@ function GestionCiclos() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Ciclos Escolares</h2>
                 <button
-                    // onClick={() => setShowModal(true)}
                     onClick={() => setShowModalCiclo(true)}
                     className="w-full sm:w-auto bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition text-sm sm:text-base"
                 >
@@ -298,7 +353,7 @@ function GestionCiclos() {
                     <div className="flex gap-3">
                         <button
                             type="button"
-                            onClick={() => setShowModal(false)}
+                            onClick={() => setShowModalCiclo(false)}
                             className="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 text-sm sm:text-base"
                         >
                             Cancelar
@@ -312,6 +367,32 @@ function GestionCiclos() {
                     </div>
                 </form>
             </Modal>
+
+            {/* Modal de Confirmación */}
+            <Modal
+                isOpen={modalConfirm.isOpen}
+                onClose={() => setModalConfirm({ ...modalConfirm, isOpen: false })}
+                title={modalConfirm.title}
+                message={modalConfirm.message}
+                variant="confirm"
+                showIcon={true}
+                icon="warning"
+                onConfirm={modalConfirm.onConfirm}
+                confirmText="Sí, continuar"
+                cancelText="Cancelar"
+                maxWidth="max-w-md"
+            />
+
+            {/* Modal de Notificación */}
+            <Modal
+                isOpen={modalNotification.isOpen}
+                onClose={() => setModalNotification({ ...modalNotification, isOpen: false })}
+                title={modalNotification.title}
+                message={modalNotification.message}
+                variant={modalNotification.variant}
+                showIcon={true}
+                maxWidth="max-w-md"
+            />
         </div>
     );
 }
@@ -338,6 +419,21 @@ function GestionGrados() {
         gradoId: '',
         jornada: 'matutina',
         plan: 'diario'
+    });
+
+    // Estados para modales de confirmación y notificación
+    const [modalConfirm, setModalConfirm] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: null
+    });
+
+    const [modalNotification, setModalNotification] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        variant: 'success'
     });
 
     useEffect(() => {
@@ -378,10 +474,20 @@ function GestionGrados() {
         try {
             if (modoEdicion) {
                 await axios.put(`/academico/grados/${gradoSeleccionado.id}`, formGrado);
-                alert('Grado actualizado');
+                setModalNotification({
+                    isOpen: true,
+                    title: '¡Éxito!',
+                    message: 'Grado actualizado exitosamente',
+                    variant: 'success'
+                });
             } else {
                 await axios.post('/academico/grados', formGrado);
-                alert('Grado creado');
+                setModalNotification({
+                    isOpen: true,
+                    title: '¡Éxito!',
+                    message: 'Grado creado exitosamente',
+                    variant: 'success'
+                });
             }
             setShowModalGrado(false);
             setFormGrado({ nombre: '', nivel: 'básico' });
@@ -389,7 +495,12 @@ function GestionGrados() {
             setGradoSeleccionado(null);
             cargarDatos();
         } catch (error) {
-            alert(error.response?.data?.message || 'Error al guardar grado');
+            setModalNotification({
+                isOpen: true,
+                title: 'Error',
+                message: error.response?.data?.message || 'Error al guardar grado',
+                variant: 'error'
+            });
         }
     };
 
@@ -402,35 +513,77 @@ function GestionGrados() {
                 jornada: formActivar.jornada,
                 plan: formActivar.plan
             });
-            alert('Grado activado para el ciclo');
+            setModalNotification({
+                isOpen: true,
+                title: '¡Éxito!',
+                message: 'Grado activado para el ciclo exitosamente',
+                variant: 'success'
+            });
             setShowModalActivar(false);
             setFormActivar({ gradoId: '', jornada: 'matutina', plan: 'diario' });
             cargarDatos();
         } catch (error) {
-            alert(error.response?.data?.message || 'Error al activar grado');
+            setModalNotification({
+                isOpen: true,
+                title: 'Error',
+                message: error.response?.data?.message || 'Error al activar grado',
+                variant: 'error'
+            });
         }
     };
 
     const handleDesactivarGrado = async (id) => {
-        if (!confirm('¿Desactivar este grado del ciclo actual?')) return;
-        try {
-            await axios.put(`/academico/grados-ciclo/${id}/desactivar`);
-            alert('Grado desactivado');
-            cargarDatos();
-        } catch (error) {
-            alert('Error al desactivar grado');
-        }
+        setModalConfirm({
+            isOpen: true,
+            title: '¿Desactivar Grado?',
+            message: '¿Estás seguro de que deseas desactivar este grado del ciclo actual?',
+            onConfirm: async () => {
+                try {
+                    await axios.put(`/academico/grados-ciclo/${id}/desactivar`);
+                    setModalNotification({
+                        isOpen: true,
+                        title: '¡Éxito!',
+                        message: 'Grado desactivado exitosamente',
+                        variant: 'success'
+                    });
+                    cargarDatos();
+                } catch (error) {
+                    setModalNotification({
+                        isOpen: true,
+                        title: 'Error',
+                        message: 'Error al desactivar grado',
+                        variant: 'error'
+                    });
+                }
+            }
+        });
     };
 
     const handleEliminarGrado = async (id) => {
-        if (!confirm('¿Eliminar este grado? Esta acción no se puede deshacer.')) return;
-        try {
-            await axios.delete(`/academico/grados/${id}`);
-            alert('Grado eliminado');
-            cargarDatos();
-        } catch (error) {
-            alert('Error al eliminar grado');
-        }
+        setModalConfirm({
+            isOpen: true,
+            title: '¿Eliminar Grado?',
+            message: 'Esta acción no se puede deshacer. ¿Estás seguro de que deseas eliminar este grado?',
+            onConfirm: async () => {
+                try {
+                    await axios.delete(`/academico/grados/${id}`);
+                    setModalNotification({
+                        isOpen: true,
+                        title: '¡Éxito!',
+                        message: 'Grado eliminado exitosamente',
+                        variant: 'success'
+                    });
+                    cargarDatos();
+                } catch (error) {
+                    setModalNotification({
+                        isOpen: true,
+                        title: 'Error',
+                        message: 'Error al eliminar grado',
+                        variant: 'error'
+                    });
+                }
+            }
+        });
     };
 
     const abrirModalEdicion = (grado) => {
@@ -462,7 +615,7 @@ function GestionGrados() {
     if (!cicloActivo) {
         return (
             <div className="p-6 text-center">
-                <p className="text-red-600 text-lg">⚠️ No hay ciclo escolar activo</p>
+                <p className="text-red-600 text-lg">No hay ciclo escolar activo</p>
                 <p className="text-gray-600 text-sm mt-2">Activa un ciclo en la pestaña "Ciclos Escolares"</p>
             </div>
         );
@@ -510,9 +663,9 @@ function GestionGrados() {
                                     <div>
                                         <h3 className="font-semibold text-gray-900">{gc.nombre}</h3>
                                         <div className="flex gap-4 mt-2 text-sm text-gray-600">
-                                            <span>📚 {gc.nivel}</span>
-                                            <span>🕐 {gc.jornada}</span>
-                                            <span>📅 {gc.plan}</span>
+                                            <span>Nivel: {gc.nivel}</span>
+                                            <span>Jornada: {gc.jornada}</span>
+                                            <span>Plan: {gc.plan}</span>
                                         </div>
                                     </div>
                                     <button
@@ -689,6 +842,32 @@ function GestionGrados() {
                     </div>
                 </form>
             </Modal>
+
+            {/* Modal de Confirmación */}
+            <Modal
+                isOpen={modalConfirm.isOpen}
+                onClose={() => setModalConfirm({ ...modalConfirm, isOpen: false })}
+                title={modalConfirm.title}
+                message={modalConfirm.message}
+                variant="confirm"
+                showIcon={true}
+                icon="warning"
+                onConfirm={modalConfirm.onConfirm}
+                confirmText="Sí, continuar"
+                cancelText="Cancelar"
+                maxWidth="max-w-md"
+            />
+
+            {/* Modal de Notificación */}
+            <Modal
+                isOpen={modalNotification.isOpen}
+                onClose={() => setModalNotification({ ...modalNotification, isOpen: false })}
+                title={modalNotification.title}
+                message={modalNotification.message}
+                variant={modalNotification.variant}
+                showIcon={true}
+                maxWidth="max-w-md"
+            />
         </div>
     );
 }
@@ -716,6 +895,21 @@ function GestionCursos() {
     const [formAsignar, setFormAsignar] = useState({
         cursoId: '',
         gradoCicloId: ''
+    });
+
+    // Estados para modales de confirmación y notificación
+    const [modalConfirm, setModalConfirm] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: null
+    });
+
+    const [modalNotification, setModalNotification] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        variant: 'success'
     });
 
     useEffect(() => {
@@ -765,10 +959,20 @@ function GestionCursos() {
         try {
             if (modoEdicion) {
                 await axios.put(`/academico/cursos/${cursoSeleccionado.id}`, formCurso);
-                alert('Curso actualizado');
+                setModalNotification({
+                    isOpen: true,
+                    title: '¡Éxito!',
+                    message: 'Curso actualizado exitosamente',
+                    variant: 'success'
+                });
             } else {
                 await axios.post('/academico/cursos', formCurso);
-                alert('Curso creado');
+                setModalNotification({
+                    isOpen: true,
+                    title: '¡Éxito!',
+                    message: 'Curso creado exitosamente',
+                    variant: 'success'
+                });
             }
             setShowModalCurso(false);
             setFormCurso({ nombre: '', descripcion: '' });
@@ -776,7 +980,12 @@ function GestionCursos() {
             setCursoSeleccionado(null);
             cargarDatos();
         } catch (error) {
-            alert(error.response?.data?.message || 'Error al guardar curso');
+            setModalNotification({
+                isOpen: true,
+                title: 'Error',
+                message: error.response?.data?.message || 'Error al guardar curso',
+                variant: 'error'
+            });
         }
     };
 
@@ -787,39 +996,81 @@ function GestionCursos() {
                 cursoId: parseInt(formAsignar.cursoId),
                 gradoCicloId: parseInt(formAsignar.gradoCicloId)
             });
-            alert('Curso asignado al grado');
+            setModalNotification({
+                isOpen: true,
+                title: '¡Éxito!',
+                message: 'Curso asignado al grado exitosamente',
+                variant: 'success'
+            });
             setShowModalAsignar(false);
             setFormAsignar({ cursoId: '', gradoCicloId: '' });
             if (gradoSeleccionado) {
                 cargarCursosGrado(gradoSeleccionado.id);
             }
         } catch (error) {
-            alert(error.response?.data?.message || 'Error al asignar curso');
+            setModalNotification({
+                isOpen: true,
+                title: 'Error',
+                message: error.response?.data?.message || 'Error al asignar curso',
+                variant: 'error'
+            });
         }
     };
 
     const handleQuitarCurso = async (id) => {
-        if (!confirm('¿Quitar este curso del grado?')) return;
-        try {
-            await axios.delete(`/academico/cursos-grado/${id}`);
-            alert('Curso quitado del grado');
-            if (gradoSeleccionado) {
-                cargarCursosGrado(gradoSeleccionado.id);
+        setModalConfirm({
+            isOpen: true,
+            title: '¿Quitar Curso?',
+            message: '¿Estás seguro de que deseas quitar este curso del grado?',
+            onConfirm: async () => {
+                try {
+                    await axios.delete(`/academico/cursos-grado/${id}`);
+                    setModalNotification({
+                        isOpen: true,
+                        title: '¡Éxito!',
+                        message: 'Curso quitado del grado exitosamente',
+                        variant: 'success'
+                    });
+                    if (gradoSeleccionado) {
+                        cargarCursosGrado(gradoSeleccionado.id);
+                    }
+                } catch (error) {
+                    setModalNotification({
+                        isOpen: true,
+                        title: 'Error',
+                        message: 'Error al quitar curso',
+                        variant: 'error'
+                    });
+                }
             }
-        } catch (error) {
-            alert('Error al quitar curso');
-        }
+        });
     };
 
     const handleEliminarCurso = async (id) => {
-        if (!confirm('¿Eliminar este curso? Esta acción no se puede deshacer.')) return;
-        try {
-            await axios.delete(`/academico/cursos/${id}`);
-            alert('Curso eliminado');
-            cargarDatos();
-        } catch (error) {
-            alert('Error al eliminar curso');
-        }
+        setModalConfirm({
+            isOpen: true,
+            title: '¿Eliminar Curso?',
+            message: 'Esta acción no se puede deshacer. ¿Estás seguro de que deseas eliminar este curso?',
+            onConfirm: async () => {
+                try {
+                    await axios.delete(`/academico/cursos/${id}`);
+                    setModalNotification({
+                        isOpen: true,
+                        title: '¡Éxito!',
+                        message: 'Curso eliminado exitosamente',
+                        variant: 'success'
+                    });
+                    cargarDatos();
+                } catch (error) {
+                    setModalNotification({
+                        isOpen: true,
+                        title: 'Error',
+                        message: 'Error al eliminar curso',
+                        variant: 'error'
+                    });
+                }
+            }
+        });
     };
 
     const abrirModalEdicion = (curso) => {
@@ -846,7 +1097,12 @@ function GestionCursos() {
 
     const abrirModalAsignar = () => {
         if (!gradoSeleccionado) {
-            alert('Selecciona un grado primero');
+            setModalNotification({
+                isOpen: true,
+                title: 'Atención',
+                message: 'Por favor, selecciona un grado primero',
+                variant: 'info'
+            });
             return;
         }
         setFormAsignar({ cursoId: '', gradoCicloId: gradoSeleccionado.id });
@@ -865,7 +1121,7 @@ function GestionCursos() {
     if (!cicloActivo) {
         return (
             <div className="p-6 text-center">
-                <p className="text-red-600 text-lg">⚠️ No hay ciclo escolar activo</p>
+                <p className="text-red-600 text-lg">No hay ciclo escolar activo</p>
                 <p className="text-gray-600 text-sm mt-2">Activa un ciclo en la pestaña "Ciclos Escolares"</p>
             </div>
         );
@@ -874,7 +1130,7 @@ function GestionCursos() {
     if (gradosCiclo.length === 0) {
         return (
             <div className="p-6 text-center">
-                <p className="text-orange-600 text-lg">⚠️ No hay grados activos en el ciclo</p>
+                <p className="text-orange-600 text-lg">No hay grados activos en el ciclo</p>
                 <p className="text-gray-600 text-sm mt-2">Activa grados en la pestaña "Grados"</p>
             </div>
         );
@@ -1107,6 +1363,32 @@ function GestionCursos() {
                     </div>
                 </form>
             </Modal>
+
+            {/* Modal de Confirmación */}
+            <Modal
+                isOpen={modalConfirm.isOpen}
+                onClose={() => setModalConfirm({ ...modalConfirm, isOpen: false })}
+                title={modalConfirm.title}
+                message={modalConfirm.message}
+                variant="confirm"
+                showIcon={true}
+                icon="warning"
+                onConfirm={modalConfirm.onConfirm}
+                confirmText="Sí, continuar"
+                cancelText="Cancelar"
+                maxWidth="max-w-md"
+            />
+
+            {/* Modal de Notificación */}
+            <Modal
+                isOpen={modalNotification.isOpen}
+                onClose={() => setModalNotification({ ...modalNotification, isOpen: false })}
+                title={modalNotification.title}
+                message={modalNotification.message}
+                variant={modalNotification.variant}
+                showIcon={true}
+                maxWidth="max-w-md"
+            />
         </div>
     );
 }
@@ -1130,6 +1412,21 @@ function GestionHorarios() {
         hora_inicio: '',
         hora_fin: '',
         cursoId: ''
+    });
+
+    // Estados para modales de confirmación y notificación
+    const [modalConfirm, setModalConfirm] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: null
+    });
+
+    const [modalNotification, setModalNotification] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        variant: 'success'
     });
 
     const diasSemana = {
@@ -1198,7 +1495,12 @@ function GestionHorarios() {
                     horaInicio: formBloque.hora_inicio,
                     horaFin: formBloque.hora_fin
                 });
-                alert('Bloque actualizado');
+                setModalNotification({
+                    isOpen: true,
+                    title: '¡Éxito!',
+                    message: 'Bloque actualizado exitosamente',
+                    variant: 'success'
+                });
             } else {
                 await axios.post('/academico/horarios', {
                     gradoCicloId: gradoSeleccionado.id,
@@ -1207,7 +1509,12 @@ function GestionHorarios() {
                     horaInicio: formBloque.hora_inicio,
                     horaFin: formBloque.hora_fin
                 });
-                alert('Bloque creado');
+                setModalNotification({
+                    isOpen: true,
+                    title: '¡Éxito!',
+                    message: 'Bloque creado exitosamente',
+                    variant: 'success'
+                });
             }
             setShowModal(false);
             setFormBloque({ dia_semana: '1', hora_inicio: '', hora_fin: '', cursoId: '' });
@@ -1216,28 +1523,59 @@ function GestionHorarios() {
             seleccionarGrado(gradoSeleccionado);
         } catch (error) {
             console.error('Error completo:', error.response?.data);
-            alert(error.response?.data?.message || 'Error al guardar bloque');
+            setModalNotification({
+                isOpen: true,
+                title: 'Error',
+                message: error.response?.data?.message || 'Error al guardar bloque',
+                variant: 'error'
+            });
         }
     };
 
     const handleEliminarBloque = async (id) => {
-        if (!confirm('¿Eliminar este bloque del horario?')) return;
-        try {
-            await axios.delete(`/academico/horarios/${id}`);
-            alert('Bloque eliminado');
-            seleccionarGrado(gradoSeleccionado);
-        } catch (error) {
-            alert('Error al eliminar bloque');
-        }
+        setModalConfirm({
+            isOpen: true,
+            title: '¿Eliminar Bloque?',
+            message: '¿Estás seguro de que deseas eliminar este bloque del horario?',
+            onConfirm: async () => {
+                try {
+                    await axios.delete(`/academico/horarios/${id}`);
+                    setModalNotification({
+                        isOpen: true,
+                        title: '¡Éxito!',
+                        message: 'Bloque eliminado exitosamente',
+                        variant: 'success'
+                    });
+                    seleccionarGrado(gradoSeleccionado);
+                } catch (error) {
+                    setModalNotification({
+                        isOpen: true,
+                        title: 'Error',
+                        message: 'Error al eliminar bloque',
+                        variant: 'error'
+                    });
+                }
+            }
+        });
     };
 
     const abrirModalCrear = () => {
         if (!gradoSeleccionado) {
-            alert('Selecciona un grado primero');
+            setModalNotification({
+                isOpen: true,
+                title: 'Atención',
+                message: 'Por favor, selecciona un grado primero',
+                variant: 'info'
+            });
             return;
         }
         if (cursosGrado.length === 0) {
-            alert('Este grado no tiene cursos asignados. Ve a la pestaña "Cursos" para asignar cursos primero.');
+            setModalNotification({
+                isOpen: true,
+                title: 'Atención',
+                message: 'Este grado no tiene cursos asignados. Ve a la pestaña "Cursos" para asignar cursos primero.',
+                variant: 'info'
+            });
             return;
         }
         setModoEdicion(false);
@@ -1278,7 +1616,7 @@ function GestionHorarios() {
     if (!cicloActivo) {
         return (
             <div className="p-6 text-center">
-                <p className="text-red-600 text-lg">⚠️ No hay ciclo escolar activo</p>
+                <p className="text-red-600 text-lg">No hay ciclo escolar activo</p>
                 <p className="text-gray-600 text-sm mt-2">Activa un ciclo en la pestaña "Ciclos Escolares"</p>
             </div>
         );
@@ -1287,7 +1625,7 @@ function GestionHorarios() {
     if (gradosCiclo.length === 0) {
         return (
             <div className="p-6 text-center">
-                <p className="text-orange-600 text-lg">⚠️ No hay grados activos en el ciclo</p>
+                <p className="text-orange-600 text-lg">No hay grados activos en el ciclo</p>
                 <p className="text-gray-600 text-sm mt-2">Activa grados en la pestaña "Grados"</p>
             </div>
         );
@@ -1482,6 +1820,32 @@ function GestionHorarios() {
                     </div>
                 </form>
             </Modal>
+
+            {/* Modal de Confirmación */}
+            <Modal
+                isOpen={modalConfirm.isOpen}
+                onClose={() => setModalConfirm({ ...modalConfirm, isOpen: false })}
+                title={modalConfirm.title}
+                message={modalConfirm.message}
+                variant="confirm"
+                showIcon={true}
+                icon="warning"
+                onConfirm={modalConfirm.onConfirm}
+                confirmText="Sí, continuar"
+                cancelText="Cancelar"
+                maxWidth="max-w-md"
+            />
+
+            {/* Modal de Notificación */}
+            <Modal
+                isOpen={modalNotification.isOpen}
+                onClose={() => setModalNotification({ ...modalNotification, isOpen: false })}
+                title={modalNotification.title}
+                message={modalNotification.message}
+                variant={modalNotification.variant}
+                showIcon={true}
+                maxWidth="max-w-md"
+            />
         </div>
     );
 }
@@ -1496,11 +1860,26 @@ function GestionInscripciones() {
     const [gradoSeleccionado, setGradoSeleccionado] = useState(null);
     const [inscripciones, setInscripciones] = useState([]);
     const [estudiantesDisponibles, setEstudiantesDisponibles] = useState([]);
-    const [estudiantesSeleccionados, setEstudiantesSeleccionados] = useState([]); // ⭐ NUEVO
-    const [inscribiendo, setInscribiendo] = useState(false); // ⭐ NUEVO
+    const [estudiantesSeleccionados, setEstudiantesSeleccionados] = useState([]);
+    const [inscribiendo, setInscribiendo] = useState(false);
     const [showModalHistorial, setShowModalHistorial] = useState(false);
     const [estudianteSeleccionado, setEstudianteSeleccionado] = useState(null);
     const [historial, setHistorial] = useState([]);
+
+    // Estados para modales de confirmación y notificación
+    const [modalConfirm, setModalConfirm] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: null
+    });
+
+    const [modalNotification, setModalNotification] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        variant: 'success'
+    });
 
     useEffect(() => {
         cargarDatos();
@@ -1579,7 +1958,7 @@ function GestionInscripciones() {
         }
     };
 
-    // ⭐ NUEVO: Inscribir estudiantes seleccionados
+    // NUEVO: Inscribir estudiantes seleccionados
     const inscribirSeleccionados = async () => {
         if (estudiantesSeleccionados.length === 0) {
             alert('Selecciona al menos un estudiante');
@@ -1613,7 +1992,7 @@ function GestionInscripciones() {
                 }
             }
 
-            alert(`Inscripción completada:\n✓ Exitosos: ${exitosos}\n✗ Fallidos: ${fallidos}`);
+            alert(`Inscripción completada:\nExitosos: ${exitosos}\nFallidos: ${fallidos}`);
 
             // Recargar datos
             setEstudiantesSeleccionados([]);
@@ -1626,16 +2005,44 @@ function GestionInscripciones() {
     };
 
     const cambiarEstado = async (inscripcionId, nuevoEstado) => {
-        if (!confirm(`¿Cambiar estado a "${nuevoEstado}"?`)) return;
-        try {
-            await axios.put(`/academico/inscripciones/${inscripcionId}/estado`, {
-                estado: nuevoEstado
-            });
-            alert('Estado actualizado');
-            seleccionarGrado(gradoSeleccionado);
-        } catch (error) {
-            alert('Error al cambiar estado');
-        }
+        const estadoTexto = {
+            'retirado': 'retirar',
+            'graduado': 'graduar',
+            'activo': 'activar'
+        };
+
+        const estadoMensaje = {
+            'retirado': 'El estudiante será marcado como retirado del grado.',
+            'graduado': 'El estudiante será marcado como graduado.',
+            'activo': 'El estudiante será marcado como activo.'
+        };
+
+        setModalConfirm({
+            isOpen: true,
+            title: `¿${estadoTexto[nuevoEstado].charAt(0).toUpperCase() + estadoTexto[nuevoEstado].slice(1)} estudiante?`,
+            message: estadoMensaje[nuevoEstado],
+            onConfirm: async () => {
+                try {
+                    await axios.put(`/academico/inscripciones/${inscripcionId}/estado`, {
+                        estado: nuevoEstado
+                    });
+                    setModalNotification({
+                        isOpen: true,
+                        title: '¡Éxito!',
+                        message: 'Estado actualizado exitosamente',
+                        variant: 'success'
+                    });
+                    seleccionarGrado(gradoSeleccionado);
+                } catch (error) {
+                    setModalNotification({
+                        isOpen: true,
+                        title: 'Error',
+                        message: 'Error al cambiar estado',
+                        variant: 'error'
+                    });
+                }
+            }
+        });
     };
 
     const verHistorial = async (estudiante) => {
@@ -1672,7 +2079,7 @@ function GestionInscripciones() {
     if (!cicloActivo) {
         return (
             <div className="p-6 text-center">
-                <p className="text-red-600 text-lg">⚠️ No hay ciclo escolar activo</p>
+                <p className="text-red-600 text-lg">No hay ciclo escolar activo</p>
                 <p className="text-gray-600 text-sm mt-2">Activa un ciclo en la pestaña "Ciclos Escolares"</p>
             </div>
         );
@@ -1681,7 +2088,7 @@ function GestionInscripciones() {
     if (gradosCiclo.length === 0) {
         return (
             <div className="p-6 text-center">
-                <p className="text-orange-600 text-lg">⚠️ No hay grados activos en el ciclo</p>
+                <p className="text-orange-600 text-lg">No hay grados activos en el ciclo</p>
                 <p className="text-gray-600 text-sm mt-2">Activa grados en la pestaña "Grados"</p>
             </div>
         );
@@ -1767,7 +2174,7 @@ function GestionInscripciones() {
 
                                 {/* Lista de estudiantes */}
                                 <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
-                                    {console.log('👥 Estudiantes disponibles:', estudiantesDisponibles)}
+                                    {console.log('Estudiantes disponibles:', estudiantesDisponibles)}
                                     {estudiantesDisponibles.map(estudiante => (
                                         <div key={estudiante.id} className="px-4 py-3 hover:bg-gray-50 flex items-center gap-3">
                                             <input
@@ -1909,6 +2316,32 @@ function GestionInscripciones() {
                     </div>
                 </div>
             )}
+
+            {/* Modal de Confirmación */}
+            <Modal
+                isOpen={modalConfirm.isOpen}
+                onClose={() => setModalConfirm({ ...modalConfirm, isOpen: false })}
+                title={modalConfirm.title}
+                message={modalConfirm.message}
+                variant="confirm"
+                showIcon={true}
+                icon="warning"
+                onConfirm={modalConfirm.onConfirm}
+                confirmText="Sí, continuar"
+                cancelText="Cancelar"
+                maxWidth="max-w-md"
+            />
+
+            {/* Modal de Notificación */}
+            <Modal
+                isOpen={modalNotification.isOpen}
+                onClose={() => setModalNotification({ ...modalNotification, isOpen: false })}
+                title={modalNotification.title}
+                message={modalNotification.message}
+                variant={modalNotification.variant}
+                showIcon={true}
+                maxWidth="max-w-md"
+            />
         </div>
     );
 }
@@ -1926,6 +2359,21 @@ function GestionAsignaciones() {
     const [docentesAsignados, setDocentesAsignados] = useState([]);
     const [docentesDisponibles, setDocentesDisponibles] = useState([]);
     const [showModalAsignar, setShowModalAsignar] = useState(false);
+
+    // Estados para modales de confirmación y notificación
+    const [modalConfirm, setModalConfirm] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: null
+    });
+
+    const [modalNotification, setModalNotification] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        variant: 'success'
+    });
 
     useEffect(() => {
         cargarDatos();
@@ -1978,7 +2426,12 @@ function GestionAsignaciones() {
 
     const abrirModalAsignar = async () => {
         if (!cursoSeleccionado) {
-            alert('Selecciona un curso primero');
+            setModalNotification({
+                isOpen: true,
+                title: 'Atención',
+                message: 'Por favor, selecciona un curso primero',
+                variant: 'info'
+            });
             return;
         }
 
@@ -1988,7 +2441,12 @@ function GestionAsignaciones() {
             setShowModalAsignar(true);
         } catch (error) {
             console.error('Error al cargar docentes disponibles:', error);
-            alert('Error al cargar docentes disponibles');
+            setModalNotification({
+                isOpen: true,
+                title: 'Error',
+                message: 'Error al cargar docentes disponibles',
+                variant: 'error'
+            });
         }
     };
 
@@ -1998,24 +2456,49 @@ function GestionAsignaciones() {
                 docenteId: docenteId,
                 cursoGradoCicloId: cursoSeleccionado.id
             });
-            alert('Docente asignado exitosamente');
+            setModalNotification({
+                isOpen: true,
+                title: '¡Éxito!',
+                message: 'Docente asignado exitosamente',
+                variant: 'success'
+            });
             setShowModalAsignar(false);
             seleccionarCurso(cursoSeleccionado);
         } catch (error) {
-            alert(error.response?.data?.message || 'Error al asignar docente');
+            setModalNotification({
+                isOpen: true,
+                title: 'Error',
+                message: error.response?.data?.message || 'Error al asignar docente',
+                variant: 'error'
+            });
         }
     };
 
     const quitarDocente = async (asignacionId) => {
-        if (!confirm('¿Quitar este docente del curso?')) return;
-
-        try {
-            await axios.delete(`/academico/docente-cursos/${asignacionId}`);
-            alert('Docente removido exitosamente');
-            seleccionarCurso(cursoSeleccionado);
-        } catch (error) {
-            alert('Error al quitar docente');
-        }
+        setModalConfirm({
+            isOpen: true,
+            title: '¿Quitar Docente?',
+            message: '¿Estás seguro de que deseas quitar este docente del curso?',
+            onConfirm: async () => {
+                try {
+                    await axios.delete(`/academico/docente-cursos/${asignacionId}`);
+                    setModalNotification({
+                        isOpen: true,
+                        title: '¡Éxito!',
+                        message: 'Docente removido exitosamente',
+                        variant: 'success'
+                    });
+                    seleccionarCurso(cursoSeleccionado);
+                } catch (error) {
+                    setModalNotification({
+                        isOpen: true,
+                        title: 'Error',
+                        message: 'Error al quitar docente',
+                        variant: 'error'
+                    });
+                }
+            }
+        });
     };
 
     if (loading) {
@@ -2030,7 +2513,7 @@ function GestionAsignaciones() {
     if (!cicloActivo) {
         return (
             <div className="p-6 text-center">
-                <p className="text-red-600 text-lg">⚠️ No hay ciclo escolar activo</p>
+                <p className="text-red-600 text-lg">No hay ciclo escolar activo</p>
                 <p className="text-gray-600 text-sm mt-2">Activa un ciclo en la pestaña "Ciclos Escolares"</p>
             </div>
         );
@@ -2054,8 +2537,8 @@ function GestionAsignaciones() {
                             key={grado.id}
                             onClick={() => seleccionarGrado(grado)}
                             className={`text-left p-4 rounded-lg border-2 transition ${gradoSeleccionado?.id === grado.id
-                                    ? 'border-primary bg-primary/10'
-                                    : 'border-gray-200 hover:border-gray-300'
+                                ? 'border-primary bg-primary/10'
+                                : 'border-gray-200 hover:border-gray-300'
                                 }`}
                         >
                             <h3 className="font-semibold text-gray-900 text-sm">{grado.nombre}</h3>
@@ -2086,8 +2569,8 @@ function GestionAsignaciones() {
                                         key={curso.id}
                                         onClick={() => seleccionarCurso(curso)}
                                         className={`w-full text-left p-3 rounded-lg border transition ${cursoSeleccionado?.id === curso.id
-                                                ? 'border-primary bg-primary/10'
-                                                : 'border-gray-200 hover:border-gray-300'
+                                            ? 'border-primary bg-primary/10'
+                                            : 'border-gray-200 hover:border-gray-300'
                                             }`}
                                     >
                                         <p className="font-medium text-gray-900 text-sm">{curso.nombre}</p>
@@ -2204,6 +2687,32 @@ function GestionAsignaciones() {
                     </div>
                 </div>
             )}
+
+            {/* Modal de Confirmación */}
+            <Modal
+                isOpen={modalConfirm.isOpen}
+                onClose={() => setModalConfirm({ ...modalConfirm, isOpen: false })}
+                title={modalConfirm.title}
+                message={modalConfirm.message}
+                variant="confirm"
+                showIcon={true}
+                icon="warning"
+                onConfirm={modalConfirm.onConfirm}
+                confirmText="Sí, continuar"
+                cancelText="Cancelar"
+                maxWidth="max-w-md"
+            />
+
+            {/* Modal de Notificación */}
+            <Modal
+                isOpen={modalNotification.isOpen}
+                onClose={() => setModalNotification({ ...modalNotification, isOpen: false })}
+                title={modalNotification.title}
+                message={modalNotification.message}
+                variant={modalNotification.variant}
+                showIcon={true}
+                maxWidth="max-w-md"
+            />
         </div>
     );
 }

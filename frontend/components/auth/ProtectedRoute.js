@@ -9,7 +9,7 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
   const router = useRouter();
 
   useEffect(() => {
-    console.log('🛡️ ProtectedRoute - Estado:', { user: !!user, loading, rol: user?.rol, allowedRoles });
+    console.log('ProtectedRoute - Estado:', { user: !!user, loading, rol: user?.rol, allowedRoles });
 
     if (!loading) {
       // Si no hay usuario, redirigir a login
@@ -21,7 +21,7 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
 
       // Si hay roles permitidos y el usuario no tiene el rol, redirigir
       if (allowedRoles.length > 0 && !allowedRoles.includes(user.rol)) {
-        console.log('⚠️ Rol no permitido, redirigiendo a dashboard correcto...');
+        console.log('Rol no permitido, redirigiendo a dashboard correcto...');
         // Redirigir a su dashboard correspondiente
         const dashboardRoutes = {
           estudiante: '/dashboard/estudiante',

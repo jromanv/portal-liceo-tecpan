@@ -56,16 +56,16 @@ export default function LoginForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log('📝 Formulario enviado');
+    console.log('Formulario enviado');
 
     if (!validateForm()) {
-      console.log('❌ Validación fallida');
+      console.log('Validación fallida');
       return;
     }
 
     setLoading(true);
 
-    console.log('⏳ Enviando credenciales...');
+    console.log('Enviando credenciales...');
 
     try {
       const result = await login(formData.email, formData.password);

@@ -330,7 +330,7 @@ director1@liceotecpan.edu.gt,liceo2025,director,Roberto,Ramírez,,,,`;
                     <ul className="text-sm text-green-700 space-y-1">
                       {results.success.map((user, index) => (
                         <li key={index}>
-                          ✓ {user.nombre} - {user.email}
+                          {user.nombre} - {user.email}
                         </li>
                       ))}
                     </ul>
@@ -348,7 +348,7 @@ director1@liceotecpan.edu.gt,liceo2025,director,Roberto,Ramírez,,,,`;
                     <ul className="text-sm text-red-700 space-y-1">
                       {results.errors.map((error, index) => (
                         <li key={index}>
-                          ✗ {error.email} - {error.error}
+                          {error.email} - {error.error}
                         </li>
                       ))}
                     </ul>
