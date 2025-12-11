@@ -72,25 +72,13 @@ const getMiInfo = async (req, res) => {
 
         // 4. Obtener horarios del grado
         const horariosResult = await db.query(`
-            SELECT 
-                h.*,
-                c.nombre as curso_nombre
-            FROM horarios h
-            JOIN cursos_grado_ciclo cgc ON h.curso_grado_ciclo_id = cgc.id
-            JOIN cursos c ON cgc.curso_id = c.id
-            WHERE h.grado_ciclo_id = $1
-            ORDER BY 
-                CASE h.dia_semana
-                    WHEN 'lunes' THEN 1
-                    WHEN 'martes' THEN 2
-                    WHEN 'miércoles' THEN 3
-                    WHEN 'jueves' THEN 4
-                    WHEN 'viernes' THEN 5
-                    WHEN 'sábado' THEN 6
-                    WHEN 'domingo' THEN 7
-                END,
-                h.hora_inicio
-        `, [inscripcion.grado_ciclo_id]);
+    SELECT 
+        h.*,
+        c.nombre as curso_nombre
+    FROM horarios h
+    JOIN cursos c ON h.curso_id = c.id
+    WHERE h.grado_ciclo_id = $1
+    ORDER BY h.dia_semana, h.hora_inicio`, [inscripcion.grado_ciclo_id]);
 
         // 5. Preparar respuesta
         const data = {

@@ -27,6 +27,19 @@ export default function MiHorarioPage() {
     ];
 
     const dias = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+    // Convertir número a texto
+    const getDiaSemanaTexto = (diaNumero) => {
+        const diasMap = {
+            1: 'lunes',
+            2: 'martes',
+            3: 'miércoles',
+            4: 'jueves',
+            5: 'viernes',
+            6: 'sábado',
+            7: 'domingo'
+        };
+        return diasMap[diaNumero] || '';
+    };
 
     useEffect(() => {
         cargarInfo();
@@ -46,7 +59,7 @@ export default function MiHorarioPage() {
     };
 
     const getHorariosPorDia = (dia) => {
-        return horarios.filter(h => h.dia_semana.toLowerCase() === dia.toLowerCase());
+        return horarios.filter(h => getDiaSemanaTexto(h.dia_semana) === dia.toLowerCase());
     };
 
     const formatHora = (hora) => {
@@ -58,7 +71,6 @@ export default function MiHorarioPage() {
             <DashboardLayout
                 userName={`${user?.nombre} ${user?.apellido}`}
                 userRole={user?.rol}
-                menuItems={menuItems}
             >
                 <div className="mb-6">
                     <h1 className="text-3xl font-bold text-gray-900">Mi Horario</h1>

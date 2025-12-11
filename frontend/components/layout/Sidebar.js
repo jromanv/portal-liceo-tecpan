@@ -92,38 +92,47 @@ export default function Sidebar({ menuItems, isOpen, onClose, isCollapsed, onTog
                   onMouseLeave={() => setHoveredItem(null)}
                   className="relative"
                 >
-                  {/* Item principal */}
                   {hasSubmenu ? (
-                    <button
-                      onClick={() => toggleSubmenu(index)}
-                      className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 ${isSubmenuOpen
-                        ? 'bg-primary-light text-white'
-                        : 'text-white hover:bg-primary-light'
-                        } ${isCollapsed ? 'justify-center' : ''}`}
-                    >
-                      <div className="flex items-center">
-                        <IconComponent type={item.iconType} />
+                    <div className="relative">
+                      <button
+                        onClick={() => toggleSubmenu(index)}
+                        className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 ${isSubmenuOpen
+                          ? 'bg-primary-light text-white'
+                          : 'text-white hover:bg-primary-light'
+                          } ${isCollapsed ? 'justify-center' : ''}`}
+                        title={item.fullLabel || item.label}
+                      >
+                        <div className="flex items-center flex-1 min-w-0">
+                          <IconComponent type={item.iconType} />
+                          {!isCollapsed && (
+                            <div className="ml-3 flex-1 min-w-0">
+                              <span className="font-medium block truncate">{item.label}</span>
+                              {item.badge && (
+                                <span className="text-xs text-white/80 block truncate mt-0.5">
+                                  {item.badge}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
                         {!isCollapsed && (
-                          <span className="font-medium ml-3">{item.label}</span>
+                          <svg
+                            className={`w-4 h-4 transition-transform duration-200 flex-shrink-0 ml-2 ${isSubmenuOpen ? 'rotate-180' : ''
+                              }`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
                         )}
-                      </div>
-                      {!isCollapsed && (
-                        <svg
-                          className={`w-4 h-4 transition-transform duration-200 ${isSubmenuOpen ? 'rotate-180' : ''
-                            }`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 9l-7 7-7-7"
-                          />
-                        </svg>
-                      )}
-                    </button>
+                      </button>
+                    </div>
                   ) : (
                     <Link
                       href={item.href}
@@ -163,11 +172,11 @@ export default function Sidebar({ menuItems, isOpen, onClose, isCollapsed, onTog
                                 : 'text-gray-200 hover:bg-primary-light hover:text-white'
                                 }`}
                             >
-                              <div className="flex items-center gap-2.5">
-                                <svg className="w-3 h-3 fill-current opacity-70" viewBox="0 0 16 16">
+                              <div className="flex items-start gap-2.5">
+                                <svg className="w-3 h-3 fill-current opacity-70 mt-1 flex-shrink-0" viewBox="0 0 16 16">
                                   <path d="M6 4l4 4-4 4V4z" />
                                 </svg>
-                                <span className="truncate">{subitem.label}</span>
+                                <span className="whitespace-normal break-words leading-tight">{subitem.label}</span>
                               </div>
                               {subitem.badge && (
                                 <span className="ml-2 px-2 py-0.5 bg-white/20 rounded text-xs">

@@ -17,7 +17,9 @@ export default function DashboardLayout({ children, userName, userRole, menuItem
     return false;
   });
   const [misCursos, setMisCursos] = useState([]);
+  const [infoEstudiante, setInfoEstudiante] = useState(null);
   const [loadingCursos, setLoadingCursos] = useState(false);
+  const [loadingEstudiante, setLoadingEstudiante] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -29,6 +31,13 @@ export default function DashboardLayout({ children, userName, userRole, menuItem
   useEffect(() => {
     if (user && userRole === 'docente') {
       loadMisCursos();
+    }
+  }, [user, userRole]);
+
+  // Cargar info si es estudiante
+  useEffect(() => {
+    if (user && userRole === 'estudiante') {
+      loadInfoEstudiante();
     }
   }, [user, userRole]);
 
@@ -50,12 +59,28 @@ export default function DashboardLayout({ children, userName, userRole, menuItem
     }
   };
 
-  // Construir menú dinámico
-  const dynamicMenuItems = userRole === 'docente' && misCursos.length > 0
-    ? [
-      menuItems[0], // Inicio
-      menuItems[1], // Calendario
-      {
+  const loadInfoEstudiante = async () => {
+    try {
+      setLoadingEstudiante(true);
+      const response = await axios.get('/academico/estudiante/mi-info');
+      setInfoEstudiante(response.data.data);
+    } catch (error) {
+      console.error('Error al cargar info estudiante:', error);
+      setInfoEstudiante(null);
+    } finally {
+      setLoadingEstudiante(false);
+    }
+  };
+
+  // Construir menú dinámico para DOCENTE
+  const buildDocenteMenu = () => {
+    const baseMenu = [
+      { href: '/dashboard/docente', iconType: 'home', label: 'Inicio' },
+      { href: '/dashboard/docente/calendario', iconType: 'calendar', label: 'Calendario' },
+    ];
+
+    if (misCursos.length > 0) {
+      baseMenu.push({
         label: 'Mis Cursos',
         iconType: 'book',
         submenu: misCursos.map(curso => ({
@@ -63,10 +88,45 @@ export default function DashboardLayout({ children, userName, userRole, menuItem
           label: curso.curso_nombre,
           badge: curso.plan === 'diario' ? 'D' : 'FS'
         }))
-      },
-      ...menuItems.slice(2) // Mi Perfil y demás
-    ]
-    : menuItems;
+      });
+    }
+
+    baseMenu.push({ href: '/dashboard/docente/perfil', iconType: 'user', label: 'Mi Perfil' });
+    return baseMenu;
+  };
+
+  // Construir menú dinámico para ESTUDIANTE
+  const buildEstudianteMenu = () => {
+    const baseMenu = [
+      { href: '/dashboard/estudiante', iconType: 'home', label: 'Inicio' },
+      { href: '/dashboard/estudiante/calendario', iconType: 'calendar', label: 'Calendario' },
+    ];
+
+    if (infoEstudiante?.grado) {
+      baseMenu.push({
+        label: 'Mi Info. Académica',
+        iconType: 'book',
+        fullLabel: `${infoEstudiante.grado.nombre} - ${infoEstudiante.grado.plan === 'diario' ? 'Plan Diario' : 'Plan Fin de Semana'}`,
+        submenu: [
+          { href: '/dashboard/estudiante/cursos', label: 'Mis Cursos' },
+          { href: '/dashboard/estudiante/horarios', label: 'Mi Horario' },
+        ]
+      });
+    }
+
+    baseMenu.push({ href: '/dashboard/estudiante/perfil', iconType: 'user', label: 'Mi Perfil' });
+    return baseMenu;
+  };
+
+  // Determinar menú según rol
+  const getDynamicMenu = () => {
+    if (userRole === 'docente') {
+      return buildDocenteMenu();
+    } else if (userRole === 'estudiante') {
+      return buildEstudianteMenu();
+    }
+    return menuItems; // Default para director u otros roles
+  };
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -90,7 +150,7 @@ export default function DashboardLayout({ children, userName, userRole, menuItem
 
       <div className="flex h-[calc(100vh-4rem)]">
         <Sidebar
-          menuItems={dynamicMenuItems}
+          menuItems={getDynamicMenu()}
           isOpen={sidebarOpen}
           onClose={closeSidebar}
           isCollapsed={sidebarCollapsed}

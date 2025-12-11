@@ -4,7 +4,7 @@ async function updateStudent() {
     try {
         const inscripcionId = 4; // ID de la inscripción de Francisco
 
-        console.log('🔄 Actualizando estado de inscripción...\n');
+        console.log('Actualizando estado de inscripción...\n');
         console.log(`Inscripción ID: ${inscripcionId}\n`);
 
         // Actualizar estado

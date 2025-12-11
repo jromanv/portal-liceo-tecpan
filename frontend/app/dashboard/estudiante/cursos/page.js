@@ -48,7 +48,6 @@ export default function MisCursosPage() {
             <DashboardLayout
                 userName={`${user?.nombre} ${user?.apellido}`}
                 userRole={user?.rol}
-                menuItems={menuItems}
             >
                 <div className="mb-6">
                     <h1 className="text-3xl font-bold text-gray-900">Mis Cursos</h1>

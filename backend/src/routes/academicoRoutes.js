@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middlewares/auth');
 const directorMiddleware = require('../middlewares/director');
+const calificacionesController = require('../controllers/calificacionesController');
+
 
 // Importar controladores
 const ciclosController = require('../controllers/ciclosController');
@@ -67,5 +69,8 @@ router.delete('/docente-cursos/:id', authMiddleware, directorMiddleware, docente
 
 // ==================== ESTUDIANTE ====================
 router.get('/estudiante/mi-info', authMiddleware, estudianteController.getMiInfo);
+
+// ==================== CALIFICACIONES ====================
+router.get('/cursos/:cursoGradoCicloId/info', authMiddleware, calificacionesController.getInfoCurso);
 
 module.exports = router;
