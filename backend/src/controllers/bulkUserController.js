@@ -274,30 +274,42 @@ const bulkCreateUsers = async (req, res) => {
           );
           estudianteId = estudianteResult.rows[0].id;
 
-          // ⭐ Si tiene grado, inscribirlo automáticamente
+          console.log(`Estudiante creado: ${userData.nombre} ${userData.apellido} (ID: ${estudianteId})`);
+
+          // Si tiene grado en el CSV, inscribirlo automáticamente
           if (userData.grado && userData.grado.trim() !== '' && cicloActivo) {
-            // Buscar gradoCicloId por nombre de grado
+            console.log(`Buscando grado: "${userData.grado.trim()}"`);
+
+            // Buscar el grado por nombre
             const gradoResult = await client.query(
-              `SELECT gc.id 
-               FROM grados_ciclo gc
-               JOIN grados g ON gc.grado_id = g.id
-               WHERE g.nombre = $1 AND gc.ciclo_id = $2 AND gc.activo = true`,
+              `SELECT gc.id, g.nombre 
+       FROM grados_ciclo gc
+       JOIN grados g ON gc.grado_id = g.id
+       WHERE g.nombre = $1 AND gc.ciclo_id = $2 AND gc.activo = true`,
               [userData.grado.trim(), cicloActivo]
             );
 
             if (gradoResult.rows.length > 0) {
               const gradoCicloId = gradoResult.rows[0].id;
+              const gradoNombre = gradoResult.rows[0].nombre;
+
+              console.log(`Grado encontrado: "${gradoNombre}" (ID: ${gradoCicloId})`);
 
               // Inscribir al estudiante
               await client.query(
                 `INSERT INTO inscripciones (estudiante_id, grado_ciclo_id, ciclo_id, fecha_inscripcion, estado)
-                 VALUES ($1, $2, $3, CURRENT_DATE, 'activo')`,
+         VALUES ($1, $2, $3, CURRENT_DATE, 'activo')`,
                 [estudianteId, gradoCicloId, cicloActivo]
               );
+
+              console.log(`INSCRITO: ${userData.nombre} → ${gradoNombre}`);
+            } else {
+              console.log(`GRADO NO ENCONTRADO: "${userData.grado}" - NO inscrito`);
             }
-            // Si el grado no existe, simplemente no inscribe pero no marca error
           }
-        } else if (userData.rol === 'docente') {
+        }
+
+        else if (userData.rol === 'docente') {
           await client.query(
             'INSERT INTO docentes (usuario_id, codigo_personal, nombre, apellido, jornada) VALUES ($1, $2, $3, $4, $5)',
             [userId, userData.codigo_personal, userData.nombre, userData.apellido, userData.jornada]

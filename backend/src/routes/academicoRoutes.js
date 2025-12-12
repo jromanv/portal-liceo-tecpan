@@ -73,4 +73,11 @@ router.get('/estudiante/mi-info', authMiddleware, estudianteController.getMiInfo
 // ==================== CALIFICACIONES ====================
 router.get('/cursos/:cursoGradoCicloId/info', authMiddleware, calificacionesController.getInfoCurso);
 
+// Importar el controlador de exportación
+const exportController = require('../controllers/exportController');
+
+// ==================== EXPORTAR ====================
+router.get('/export/asignaciones-docentes/:cicloId', authMiddleware, directorMiddleware, exportController.exportarAsignacionesDocentes);
+router.get('/export/asignaciones-grado/:gradoCicloId', authMiddleware, directorMiddleware, exportController.exportarAsignacionesGrado);
+
 module.exports = router;

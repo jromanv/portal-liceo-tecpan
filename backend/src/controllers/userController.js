@@ -227,6 +227,8 @@ const getUserById = async (req, res) => {
   }
 };
 
+
+
 // Crear usuario
 const createUser = async (req, res) => {
   const client = await pool.connect();
@@ -234,8 +236,22 @@ const createUser = async (req, res) => {
   try {
     const { email, password, rol, nombre, apellido, codigo_personal, plan, jornada, gradoCicloId } = req.body;
 
+    console.log('\n🔍 ===== CREAR USUARIO =====');
+    console.log('📦 Datos recibidos:', JSON.stringify({
+      email,
+      rol,
+      nombre,
+      apellido,
+      codigo_personal,
+      plan,
+      jornada,
+      gradoCicloId: gradoCicloId || 'NO PROPORCIONADO',
+      tipoGradoCicloId: typeof gradoCicloId
+    }, null, 2));
+
     // Validaciones
     if (!email || !password || !rol || !nombre || !apellido) {
+      console.log('❌ Validación fallida: campos obligatorios faltantes');
       return res.status(400).json({
         success: false,
         message: 'Todos los campos son obligatorios',
@@ -325,6 +341,8 @@ const createUser = async (req, res) => {
     );
 
     const userId = userResult.rows[0].id;
+    console.log(`✅ Usuario creado - ID: ${userId}`);
+
     let estudianteId = null;
 
     // Insertar en tabla específica según rol
@@ -334,51 +352,79 @@ const createUser = async (req, res) => {
         [userId, codigo_personal, nombre, apellido, plan]
       );
       estudianteId = estudianteResult.rows[0].id;
+      console.log(`✅ Estudiante creado - ID: ${estudianteId}`);
 
-      // ⭐ Si tiene gradoCicloId, inscribirlo automáticamente
-      if (gradoCicloId) {
-        // Obtener ciclo activo
-        const cicloResult = await client.query(
-          'SELECT id FROM ciclos_escolares WHERE activo = true LIMIT 1'
-        );
+      // ⭐ INSCRIPCIÓN AUTOMÁTICA
+      if (gradoCicloId && gradoCicloId !== '') {
+        console.log(`📝 Iniciando inscripción automática...`);
+        console.log(`   gradoCicloId recibido: ${gradoCicloId} (tipo: ${typeof gradoCicloId})`);
 
-        if (cicloResult.rows.length > 0) {
-          const cicloId = cicloResult.rows[0].id;
-
-          // Inscribir al estudiante
-          await client.query(
-            `INSERT INTO inscripciones (estudiante_id, grado_ciclo_id, ciclo_id, fecha_inscripcion, estado)
-             VALUES ($1, $2, $3, CURRENT_DATE, 'activo')`,
-            [estudianteId, gradoCicloId, cicloId]
+        try {
+          // Obtener ciclo activo
+          const cicloResult = await client.query(
+            'SELECT id, anio FROM ciclos_escolares WHERE activo = true LIMIT 1'
           );
+
+          if (cicloResult.rows.length === 0) {
+            console.log('⚠️  NO HAY CICLO ACTIVO - No se puede inscribir');
+          } else {
+            const cicloActivo = cicloResult.rows[0];
+            console.log(`✅ Ciclo activo encontrado - ID: ${cicloActivo.id}, Año: ${cicloActivo.anio}`);
+
+            // Verificar que el grado existe
+            const gradoCheck = await client.query(
+              'SELECT gc.id, g.nombre FROM grados_ciclo gc JOIN grados g ON gc.grado_id = g.id WHERE gc.id = $1',
+              [parseInt(gradoCicloId)]
+            );
+
+            if (gradoCheck.rows.length === 0) {
+              console.log(`⚠️  GRADO NO ENCONTRADO - gradoCicloId: ${gradoCicloId}`);
+            } else {
+              console.log(`✅ Grado encontrado: ${gradoCheck.rows[0].nombre}`);
+
+              // Inscribir al estudiante
+              const inscripcionResult = await client.query(
+                `INSERT INTO inscripciones (estudiante_id, grado_ciclo_id, ciclo_id, fecha_inscripcion, estado)
+                 VALUES ($1, $2, $3, CURRENT_DATE, 'activo')
+                 RETURNING id`,
+                [estudianteId, parseInt(gradoCicloId), cicloActivo.id]
+              );
+
+              console.log(`✅✅✅ INSCRIPCIÓN CREADA EXITOSAMENTE - ID: ${inscripcionResult.rows[0].id}`);
+            }
+          }
+        } catch (inscError) {
+          console.error('❌ ERROR AL INSCRIBIR:', inscError.message);
+          // No hacer rollback, el usuario se creó exitosamente
         }
+      } else {
+        console.log('⚠️  gradoCicloId NO proporcionado o vacío - Estudiante NO inscrito');
       }
     } else if (rol === 'docente') {
       await client.query(
         'INSERT INTO docentes (usuario_id, codigo_personal, nombre, apellido, jornada) VALUES ($1, $2, $3, $4, $5)',
         [userId, codigo_personal, nombre, apellido, jornada]
       );
+      console.log('✅ Docente creado');
     } else if (rol === 'director') {
       await client.query(
         'INSERT INTO directores (usuario_id, nombre, apellido) VALUES ($1, $2, $3)',
         [userId, nombre, apellido]
       );
+      console.log('✅ Director creado');
     }
 
     await client.query('COMMIT');
+    console.log('✅ TRANSACCIÓN COMPLETADA EXITOSAMENTE\n');
 
     res.status(201).json({
       success: true,
       message: 'Usuario creado exitosamente',
-      data: {
-        id: userId,
-        email,
-        rol,
-      },
+      data: { id: userId },
     });
   } catch (error) {
     await client.query('ROLLBACK');
-    console.error('Error al crear usuario:', error);
+    console.error('❌ ERROR AL CREAR USUARIO:', error);
     res.status(500).json({
       success: false,
       message: 'Error al crear usuario',
@@ -387,6 +433,170 @@ const createUser = async (req, res) => {
     client.release();
   }
 };
+
+
+
+
+// // Crear usuario
+// const createUser = async (req, res) => {
+//   const client = await pool.connect();
+
+//   try {
+//     const { email, password, rol, nombre, apellido, codigo_personal, plan, jornada, gradoCicloId } = req.body;
+
+//     // Validaciones
+//     if (!email || !password || !rol || !nombre || !apellido) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'Todos los campos son obligatorios',
+//       });
+//     }
+
+//     // Validar formato de email
+//     const allowedDomains = process.env.ALLOWED_DOMAINS.split(',');
+//     const domain = email.split('@')[1];
+//     if (!allowedDomains.includes(domain)) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'El email debe ser institucional (@liceotecpan.edu.gt o @liceotecpan.com)',
+//       });
+//     }
+
+//     // Validar rol
+//     if (!['estudiante', 'docente', 'director'].includes(rol)) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'Rol inválido',
+//       });
+//     }
+
+//     // Validar campos según rol
+//     if ((rol === 'estudiante' || rol === 'docente') && !codigo_personal) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'El código personal es obligatorio para estudiantes y docentes',
+//       });
+//     }
+
+//     if (rol === 'estudiante' && !plan) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'El plan es obligatorio para estudiantes',
+//       });
+//     }
+
+//     if (rol === 'docente' && !jornada) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'La jornada es obligatoria para docentes',
+//       });
+//     }
+
+//     await client.query('BEGIN');
+
+//     // Verificar si el email ya existe
+//     const emailCheck = await client.query(
+//       'SELECT id FROM usuarios WHERE email = $1',
+//       [email]
+//     );
+
+//     if (emailCheck.rows.length > 0) {
+//       await client.query('ROLLBACK');
+//       return res.status(400).json({
+//         success: false,
+//         message: 'El email ya está registrado',
+//       });
+//     }
+
+//     // Verificar si el código personal ya existe (si aplica)
+//     if (codigo_personal) {
+//       const table = rol === 'estudiante' ? 'estudiantes' : 'docentes';
+//       const codigoCheck = await client.query(
+//         `SELECT id FROM ${table} WHERE codigo_personal = $1`,
+//         [codigo_personal]
+//       );
+
+//       if (codigoCheck.rows.length > 0) {
+//         await client.query('ROLLBACK');
+//         return res.status(400).json({
+//           success: false,
+//           message: 'El código personal ya está registrado',
+//         });
+//       }
+//     }
+
+//     // Hashear contraseña
+//     const hashedPassword = await hashPassword(password);
+
+//     // Insertar en tabla usuarios
+//     const userResult = await client.query(
+//       'INSERT INTO usuarios (email, password, rol, activo) VALUES ($1, $2, $3, $4) RETURNING id',
+//       [email, hashedPassword, rol, true]
+//     );
+
+//     const userId = userResult.rows[0].id;
+//     let estudianteId = null;
+
+//     // Insertar en tabla específica según rol
+//     if (rol === 'estudiante') {
+//       const estudianteResult = await client.query(
+//         'INSERT INTO estudiantes (usuario_id, codigo_personal, nombre, apellido, plan) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+//         [userId, codigo_personal, nombre, apellido, plan]
+//       );
+//       estudianteId = estudianteResult.rows[0].id;
+
+//       // ⭐ Si tiene gradoCicloId, inscribirlo automáticamente
+//       if (gradoCicloId) {
+//         // Obtener ciclo activo
+//         const cicloResult = await client.query(
+//           'SELECT id FROM ciclos_escolares WHERE activo = true LIMIT 1'
+//         );
+
+//         if (cicloResult.rows.length > 0) {
+//           const cicloId = cicloResult.rows[0].id;
+
+//           // Inscribir al estudiante
+//           await client.query(
+//             `INSERT INTO inscripciones (estudiante_id, grado_ciclo_id, ciclo_id, fecha_inscripcion, estado)
+//              VALUES ($1, $2, $3, CURRENT_DATE, 'activo')`,
+//             [estudianteId, gradoCicloId, cicloId]
+//           );
+//         }
+//       }
+//     } else if (rol === 'docente') {
+//       await client.query(
+//         'INSERT INTO docentes (usuario_id, codigo_personal, nombre, apellido, jornada) VALUES ($1, $2, $3, $4, $5)',
+//         [userId, codigo_personal, nombre, apellido, jornada]
+//       );
+//     } else if (rol === 'director') {
+//       await client.query(
+//         'INSERT INTO directores (usuario_id, nombre, apellido) VALUES ($1, $2, $3)',
+//         [userId, nombre, apellido]
+//       );
+//     }
+
+//     await client.query('COMMIT');
+
+//     res.status(201).json({
+//       success: true,
+//       message: 'Usuario creado exitosamente',
+//       data: {
+//         id: userId,
+//         email,
+//         rol,
+//       },
+//     });
+//   } catch (error) {
+//     await client.query('ROLLBACK');
+//     console.error('Error al crear usuario:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: 'Error al crear usuario',
+//     });
+//   } finally {
+//     client.release();
+//   }
+// };
 
 // Actualizar usuario
 const updateUser = async (req, res) => {

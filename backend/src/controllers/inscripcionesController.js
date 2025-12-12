@@ -40,13 +40,21 @@ const getInscripcionesGradoCiclo = async (req, res) => {
         const { gradoCicloId } = req.params;
 
         const result = await pool.query(
-            `SELECT i.*, 
-                    e.nombre, e.apellido, e.codigo_personal,
-                    u.email
+            `SELECT 
+                i.id as inscripcion_id,
+                i.estado,
+                i.fecha_inscripcion,
+                e.id as estudiante_id,
+                e.nombre, 
+                e.apellido, 
+                e.codigo_personal,
+                e.plan,
+                u.email
              FROM inscripciones i
              JOIN estudiantes e ON i.estudiante_id = e.id
              JOIN usuarios u ON e.usuario_id = u.id
-             WHERE i.grado_ciclo_id = $1 AND i.estado = 'activo'
+             WHERE i.grado_ciclo_id = $1 
+             AND i.estado = 'activo'
              ORDER BY e.apellido, e.nombre`,
             [gradoCicloId]
         );
@@ -63,6 +71,7 @@ const getInscripcionesGradoCiclo = async (req, res) => {
         });
     }
 };
+
 
 // Obtener inscripción de un estudiante en un ciclo
 const getInscripcionEstudiante = async (req, res) => {
@@ -144,7 +153,18 @@ const createInscripcion = async (req, res) => {
             });
         }
 
-        // Verificar que el estudiante no esté ya inscrito en este ciclo
+        const estudianteCheck = await pool.query(
+            'SELECT id, nombre, apellido FROM estudiantes WHERE id = $1',
+            [estudianteId]
+        );
+
+        if (estudianteCheck.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Estudiante no encontrado'
+            });
+        }
+
         const existente = await pool.query(
             'SELECT id FROM inscripciones WHERE estudiante_id = $1 AND ciclo_id = $2',
             [estudianteId, cicloId]
