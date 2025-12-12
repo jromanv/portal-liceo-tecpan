@@ -75,10 +75,14 @@ const getUsers = async (req, res) => {
 
     // Filtro por plan (para estudiantes)
     if (req.query.plan) {
+      // Normalizar el valor del plan: convertir espacios a guiones bajos
+      const planNormalizado = req.query.plan.replace(/ /g, '_');
       query += ` AND e.plan = $${paramCount}`;
-      params.push(req.query.plan);
+      params.push(planNormalizado);
       paramCount++;
     }
+
+
 
     // Filtro por jornada (para docentes)
     if (req.query.jornada) {
@@ -87,12 +91,6 @@ const getUsers = async (req, res) => {
       paramCount++;
     }
 
-    // Filtro por jornada (para docentes)
-    if (req.query.jornada) {
-      query += ` AND d.jornada = $${paramCount}`;
-      params.push(req.query.jornada);
-      paramCount++;
-    }
 
     // Filtro por grado inscrito (para estudiantes)
     if (req.query.gradoCicloId) {

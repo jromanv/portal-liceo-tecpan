@@ -2,21 +2,43 @@ const pool = require('../config/database');
 const { hashPassword } = require('../utils/bcrypt');
 const Papa = require('papaparse');
 const XLSX = require('xlsx');
+const jschardet = require('jschardet');
+const iconv = require('iconv-lite');
 
 // Función para parsear archivo CSV
 const parseCSV = (fileBuffer) => {
   return new Promise((resolve, reject) => {
-    const fileContent = fileBuffer.toString('utf8');
-    Papa.parse(fileContent, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        resolve(results.data);
-      },
-      error: (error) => {
-        reject(error);
-      },
-    });
+    try {
+      // Detectar la codificación del archivo
+      const detected = jschardet.detect(fileBuffer);
+      const encoding = detected.encoding || 'utf8';
+
+      console.log(`Codificación detectada: ${encoding} (confianza: ${detected.confidence})`);
+
+      // Convertir el buffer a UTF-8
+      let fileContent;
+      if (encoding.toLowerCase() === 'utf-8' || encoding.toLowerCase() === 'utf8') {
+        fileContent = fileBuffer.toString('utf8');
+      } else {
+        // Convertir desde la codificación detectada a UTF-8
+        fileContent = iconv.decode(fileBuffer, encoding);
+      }
+
+      // Parsear el CSV
+      Papa.parse(fileContent, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          resolve(results.data);
+        },
+        error: (error) => {
+          reject(error);
+        },
+      });
+    } catch (error) {
+      console.error('Error al parsear CSV:', error);
+      reject(error);
+    }
   });
 };
 
